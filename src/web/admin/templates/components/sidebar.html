@@ -1,0 +1,177 @@
+<!-- Sidebar Component -->
+<div class="flex flex-col h-full">
+    <!-- Logo -->
+    <div class="flex items-center flex-shrink-0 px-4">
+        <div class="flex items-center">
+            <div class="w-8 h-8 bg-healthcare-blue rounded-lg flex items-center justify-center">
+                <i class="fas fa-heartbeat text-white text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <h2 class="text-lg font-semibold text-gray-900">Healthcare AI</h2>
+                <p class="text-xs text-gray-500">V2 Admin</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="mt-8 flex-1 px-2 space-y-1 overflow-y-auto custom-scrollbar">
+        <!-- Dashboard -->
+        <a href="/admin/" 
+           class="group flex items-center px-2 py-2 text-sm font-medium rounded-md 
+                  {{ 'bg-healthcare-blue text-white' if request.url.path == '/admin/' else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+            <i class="fas fa-tachometer-alt mr-3 flex-shrink-0 h-4 w-4"></i>
+            Dashboard
+        </a>
+
+        <!-- Users -->
+        <a href="/admin/users" 
+           class="group flex items-center px-2 py-2 text-sm font-medium rounded-md 
+                  {{ 'bg-healthcare-blue text-white' if request.url.path.startswith('/admin/users') else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+            <i class="fas fa-users mr-3 flex-shrink-0 h-4 w-4"></i>
+            Users
+            <span class="ml-auto inline-block py-0.5 px-2 text-xs font-medium rounded-full 
+                         {{ 'bg-white text-healthcare-blue' if request.url.path.startswith('/admin/users') else 'bg-gray-100 text-gray-900' }}"
+                  x-text="metrics.users?.active || 0"></span>
+        </a>
+
+        <!-- Data Management -->
+        <div x-data="{ submenuOpen: false }">
+            <button @click="submenuOpen = !submenuOpen"
+                    class="group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <i class="fas fa-database mr-3 flex-shrink-0 h-4 w-4"></i>
+                Data Management
+                <i class="fas fa-chevron-down ml-auto h-3 w-3 transform transition-transform duration-200"
+                   :class="{ 'rotate-180': submenuOpen }"></i>
+            </button>
+            <div x-show="submenuOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 class="mt-1 space-y-1">
+                <a href="/admin/data-management"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md 
+                          {{ 'bg-healthcare-blue text-white' if request.url.path == '/admin/data-management' else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                    <i class="fas fa-upload mr-2 h-3 w-3"></i>
+                    File Management
+                </a>
+                <a href="/admin/data/hk-sources"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-globe mr-2 h-3 w-3"></i>
+                    HK Data Sources
+                </a>
+                <a href="/admin/data/quality"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-check-circle mr-2 h-3 w-3"></i>
+                    Quality Review
+                </a>
+            </div>
+        </div>
+
+        <!-- AI Agents -->
+        <div x-data="{ submenuOpen: false }">
+            <button @click="submenuOpen = !submenuOpen"
+                    class="group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <i class="fas fa-robot mr-3 flex-shrink-0 h-4 w-4"></i>
+                AI Agents
+                <i class="fas fa-chevron-down ml-auto h-3 w-3 transform transition-transform duration-200"
+                   :class="{ 'rotate-180': submenuOpen }"></i>
+            </button>
+            <div x-show="submenuOpen" class="mt-1 space-y-1">
+                <a href="/admin/agents/performance"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-chart-line mr-2 h-3 w-3"></i>
+                    Performance
+                </a>
+                <a href="/admin/agents/conversations"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-comments mr-2 h-3 w-3"></i>
+                    Conversations
+                </a>
+                <a href="/admin/agents/prompts"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-edit mr-2 h-3 w-3"></i>
+                    Prompt Management
+                </a>
+            </div>
+        </div>
+
+        <!-- Security -->
+        <a href="/admin/security" 
+           class="group flex items-center px-2 py-2 text-sm font-medium rounded-md 
+                  {{ 'bg-healthcare-blue text-white' if request.url.path.startswith('/admin/security') else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+            <i class="fas fa-shield-alt mr-3 flex-shrink-0 h-4 w-4"></i>
+            Security
+            <span class="ml-auto inline-block w-2 h-2 rounded-full"
+                  :class="getStatusClass(metrics.security?.status || 'unknown')"></span>
+        </a>
+
+        <!-- Analytics -->
+        <a href="/admin/analytics" 
+           class="group flex items-center px-2 py-2 text-sm font-medium rounded-md 
+                  {{ 'bg-healthcare-blue text-white' if request.url.path.startswith('/admin/analytics') else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+            <i class="fas fa-chart-bar mr-3 flex-shrink-0 h-4 w-4"></i>
+            Analytics
+        </a>
+
+        <!-- System -->
+        <div x-data="{ submenuOpen: false }">
+            <button @click="submenuOpen = !submenuOpen"
+                    class="group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <i class="fas fa-cog mr-3 flex-shrink-0 h-4 w-4"></i>
+                System
+                <i class="fas fa-chevron-down ml-auto h-3 w-3 transform transition-transform duration-200"
+                   :class="{ 'rotate-180': submenuOpen }"></i>
+            </button>
+            <div x-show="submenuOpen" class="mt-1 space-y-1">
+                <a href="/admin/system/health"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-heartbeat mr-2 h-3 w-3"></i>
+                    Health Checks
+                </a>
+                <a href="/admin/system/logs"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-file-alt mr-2 h-3 w-3"></i>
+                    System Logs
+                </a>
+                <a href="/admin/system/config"
+                   class="group flex items-center pl-11 pr-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                    <i class="fas fa-sliders-h mr-2 h-3 w-3"></i>
+                    Configuration
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Status Panel -->
+    <div class="flex-shrink-0 p-4 border-t border-gray-200">
+        <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            <!-- Connection Status -->
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-500">Connection</span>
+                <div class="flex items-center space-x-1">
+                    <div class="w-2 h-2 rounded-full"
+                         :class="isConnected ? 'bg-green-400 pulse-green' : 'bg-red-400'"></div>
+                    <span :class="isConnected ? 'text-green-600' : 'text-red-600'"
+                          x-text="isConnected ? 'Live' : 'Offline'"></span>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-500">System</span>
+                <div class="flex items-center space-x-1">
+                    <div class="w-2 h-2 rounded-full"
+                         :class="getStatusClass(metrics.system?.status || 'unknown')"></div>
+                    <span class="text-gray-600 capitalize" 
+                          x-text="metrics.system?.status || 'Unknown'"></span>
+                </div>
+            </div>
+
+            <!-- Last Update -->
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-500">Updated</span>
+                <span class="text-gray-600" x-text="lastUpdate ? timeAgo(lastUpdate) : 'Never'"></span>
+            </div>
+        </div>
+    </div>
+</div>

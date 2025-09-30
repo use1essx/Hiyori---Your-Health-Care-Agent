@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title or "Healthcare AI V2 Admin" }}{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'healthcare-blue': '#2563eb',
+                        'healthcare-green': '#059669',
+                        'healthcare-red': '#dc2626',
+                        'healthcare-yellow': '#d97706',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        
+        /* Status animations */
+        .pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+        
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Status indicators */
+        .status-healthy { @apply bg-green-500; }
+        .status-warning { @apply bg-yellow-500; }
+        .status-error { @apply bg-red-500; }
+        .status-unknown { @apply bg-gray-400; }
+        
+        /* Card effects */
+        .metric-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Chart container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full font-sans antialiased" x-data="adminApp()" x-init="initApp()">
+    <div class="min-h-full">
+        <!-- Mobile sidebar -->
+        <div x-show="sidebarOpen" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             class="fixed inset-0 flex z-40 md:hidden">
+            <div @click="sidebarOpen = false" class="fixed inset-0 bg-gray-600 bg-opacity-75"></div>
+            <div x-transition:enter="transition ease-in-out duration-300 transform"
+                 class="relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-white">
+                {% include 'components/sidebar.html' %}
+            </div>
+        </div>
+
+        <!-- Desktop sidebar -->
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow border-r border-gray-200 pt-5 bg-white overflow-y-auto">
+                {% include 'components/sidebar.html' %}
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top header -->
+            <div class="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
+                {% include 'components/header.html' %}
+            </div>
+
+            <!-- Page content -->
+            <main class="flex-1">
+                <div class="py-6">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2" x-show="notifications.length > 0">
+        <template x-for="notification in notifications" :key="notification.id">
+            <div class="max-w-sm w-full bg-white shadow-lg rounded-lg ring-1 ring-black ring-opacity-5">
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i :class="{
+                                'fas fa-check-circle text-green-400': notification.type === 'success',
+                                'fas fa-exclamation-triangle text-yellow-400': notification.type === 'warning',
+                                'fas fa-exclamation-circle text-red-400': notification.type === 'error',
+                                'fas fa-info-circle text-blue-400': notification.type === 'info'
+                            }"></i>
+                        </div>
+                        <div class="ml-3 w-0 flex-1">
+                            <p class="text-sm font-medium text-gray-900" x-text="notification.title"></p>
+                            <p class="mt-1 text-sm text-gray-500" x-text="notification.message"></p>
+                        </div>
+                        <button class="ml-4 text-gray-400 hover:text-gray-500" @click="removeNotification(notification.id)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Loading overlay -->
+    <div x-show="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75">
+        <div class="bg-white p-6 rounded-lg shadow-xl">
+            <div class="flex items-center space-x-3">
+                <div class="spinner"></div>
+                <span class="text-gray-700" x-text="loadingMessage">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin JavaScript -->
+    <script src="/static/js/admin.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/charts.js"></script>
+    
+    <script>
+        // Initialize global state if initial metrics are provided
+        {% if initial_metrics %}
+        window.initialMetrics = {{ initial_metrics | safe }};
+        {% endif %}
+        
+        // Set WebSocket URL if provided
+        {% if websocket_url %}
+        window.websocketUrl = "{{ websocket_url }}";
+        {% endif %}
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

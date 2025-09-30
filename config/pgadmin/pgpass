@@ -1,0 +1,6 @@
+# pgAdmin password file for Healthcare AI V2
+# Format: hostname:port:database:username:password
+postgres:5432:healthcare_ai_v2:admin:healthcare_ai_2025
+postgres:5432:*:admin:healthcare_ai_2025
+localhost:5432:healthcare_ai_v2:admin:healthcare_ai_2025
+localhost:5432:*:admin:healthcare_ai_2025

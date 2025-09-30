@@ -1,0 +1,127 @@
+# Healthcare AI V2 + Live2D Unified System - Simple Configuration
+# Simplified Docker Compose for testing and development
+
+services:
+  # =============================================================================
+  # DATABASE SERVICES
+  # =============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: healthcare_ai_postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-healthcare_ai_v2}
+      POSTGRES_USER: ${DATABASE_USER:-admin}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-healthcare_ai_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - healthcare_ai_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-admin} -d ${DATABASE_NAME:-healthcare_ai_v2}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: healthcare_ai_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - healthcare_ai_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # =============================================================================
+  # HEALTHCARE AI BACKEND
+  # =============================================================================
+  healthcare_ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: healthcare_ai_backend
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-healthcare_ai_v2}
+      DATABASE_USER: ${DATABASE_USER:-admin}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-healthcare_ai_2024}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_DEFAULT_MODEL: ${OPENROUTER_DEFAULT_MODEL:-lite}
+      OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-Healthcare AI V2}
+      SECRET_KEY: ${SECRET_KEY:-healthcare_ai_v2_secret_key}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - .:/app
+      - healthcare_uploads:/app/uploads
+      - healthcare_logs:/app/logs
+    ports:
+      - "${HEALTHCARE_AI_PORT:-8000}:8000"
+    networks:
+      - healthcare_ai_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # =============================================================================
+  # DATABASE ADMINISTRATION
+  # =============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: healthcare_ai_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@healthcare-ai.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-healthcare_ai_2025}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_SERVER_JSON_FILE: '/pgadmin4/servers.json'
+    user: root
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./config/pgadmin/pgpass:/pgadmin4/pgpass:ro
+      - ./config/pgadmin/config_local.py:/pgadmin4/config_local.py:ro
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - healthcare_ai_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+# =============================================================================
+# NETWORKS AND VOLUMES
+# =============================================================================
+networks:
+  healthcare_ai_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  healthcare_uploads:
+    driver: local
+  healthcare_logs:
+    driver: local

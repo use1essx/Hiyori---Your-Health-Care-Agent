@@ -1,0 +1,26 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Healthcare AI V2 - Primary Database",
+      "Group": "Healthcare AI",
+      "Port": 5432,
+      "Username": "admin",
+      "Host": "postgres",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "healthcare_ai_v2",
+      "PassFile": "/pgadmin4/pgpass",
+      "Comment": "Main Healthcare AI V2 database with patient data, conversations, and HK healthcare information"
+    },
+    "2": {
+      "Name": "Healthcare AI V2 - Analytics",
+      "Group": "Healthcare AI",
+      "Port": 5432,
+      "Username": "admin",
+      "Host": "postgres",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "healthcare_ai_v2",
+      "PassFile": "/pgadmin4/pgpass",
+      "Comment": "Analytics view for Healthcare AI V2 with read-only access to reporting data"
+    }
+  }
+}

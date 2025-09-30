@@ -1,0 +1,76 @@
+<!-- Metric Card Widget Component -->
+<!-- Usage: {% include 'components/widgets/metric_card.html' with context %} -->
+
+{% set 
+    title = title or "Metric",
+    value = value or 0,
+    subtitle = subtitle or "",
+    icon = icon or "fas fa-chart-line",
+    color = color or "healthcare-blue",
+    trend = trend or None,
+    trend_value = trend_value or 0,
+    status = status or "unknown",
+    link = link or None
+%}
+
+<div class="metric-card bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-all duration-200">
+    <div class="p-5">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-{{ color }} rounded-lg flex items-center justify-center">
+                    <i class="{{ icon }} text-white"></i>
+                </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">{{ title }}</dt>
+                    <dd class="flex items-baseline">
+                        <div class="text-2xl font-semibold text-gray-900">
+                            {{ value }}
+                        </div>
+                        {% if trend %}
+                        <div class="ml-2 flex items-baseline text-sm">
+                            {% if trend == 'up' %}
+                            <div class="flex items-center text-green-600">
+                                <i class="fas fa-arrow-up text-xs"></i>
+                                <span class="ml-1">{{ trend_value }}%</span>
+                            </div>
+                            {% elif trend == 'down' %}
+                            <div class="flex items-center text-red-600">
+                                <i class="fas fa-arrow-down text-xs"></i>
+                                <span class="ml-1">{{ trend_value }}%</span>
+                            </div>
+                            {% else %}
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-minus text-xs"></i>
+                                <span class="ml-1">{{ trend_value }}%</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+            {% if status %}
+            <div class="flex-shrink-0">
+                <div class="w-3 h-3 rounded-full" 
+                     :class="getStatusClass('{{ status }}')"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if subtitle %}
+    <div class="bg-gray-50 px-5 py-3">
+        <div class="text-sm">
+            <span class="text-gray-500">{{ subtitle }}</span>
+        </div>
+    </div>
+    {% endif %}
+    {% if link %}
+    <div class="bg-gray-50 px-5 py-3 border-t border-gray-200">
+        <a href="{{ link }}" class="text-sm text-{{ color }} hover:text-{{ color }}/80 font-medium">
+            View details →
+        </a>
+    </div>
+    {% endif %}
+</div>

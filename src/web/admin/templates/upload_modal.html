@@ -1,0 +1,422 @@
+<!-- Upload Modal Component -->
+<div id="upload-modal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="text-xl font-semibold">Quick Upload</h3>
+            <button class="text-gray-400 hover:text-gray-600" onclick="closeUploadModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Quick Upload Form -->
+            <form id="quick-upload-form" class="space-y-4">
+                <div class="form-group">
+                    <label class="form-label" for="modal-category">Category *</label>
+                    <select id="modal-category" name="category" class="form-select" required>
+                        <option value="">Select category...</option>
+                        <option value="medical_guidelines">Medical Guidelines</option>
+                        <option value="treatment_protocols">Treatment Protocols</option>
+                        <option value="medication_info">Medication Information</option>
+                        <option value="emergency_procedures">Emergency Procedures</option>
+                        <option value="hk_health_policies">HK Health Policies</option>
+                        <option value="clinical_research">Clinical Research</option>
+                        <option value="patient_education">Patient Education</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="modal-title">Title</label>
+                    <input type="text" id="modal-title" name="title" class="form-input" placeholder="Document title (optional)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="modal-description">Description</label>
+                    <textarea id="modal-description" name="description" class="form-textarea" rows="3" placeholder="Brief description..."></textarea>
+                </div>
+            </form>
+
+            <!-- Mini Upload Zone -->
+            <div id="modal-upload-zone" class="upload-zone" style="padding: 2rem 1rem;">
+                <div class="upload-zone-content">
+                    <div class="upload-icon" style="width: 3rem; height: 3rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text" style="font-size: 1rem;">Drop files here or click to browse</div>
+                    <div class="upload-subtext">PDF, JPG, PNG, TXT, DOC - Max 50MB</div>
+                </div>
+                <input type="file" id="modal-file-input" multiple style="display: none;">
+            </div>
+
+            <!-- Quick File List -->
+            <div id="modal-file-list-container" style="display: none;">
+                <div class="flex justify-between items-center mb-2">
+                    <div id="modal-file-count" class="text-sm text-gray-600">0 file(s) selected</div>
+                    <button id="modal-clear-files" class="text-red-600 hover:text-red-800 text-sm">Clear All</button>
+                </div>
+                <div id="modal-file-list" class="file-list" style="max-height: 12rem;"></div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="modal-upload-progress" style="display: none;">
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">Uploading...</span>
+                        <span id="modal-progress-text" class="text-sm text-gray-600">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="modal-progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div id="modal-progress-message" class="text-xs text-gray-500 mt-2">Preparing upload...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeUploadModal()">Cancel</button>
+            <button type="button" id="modal-upload-btn" class="btn btn-primary" disabled>Upload Files</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal-specific styles */
+#upload-modal .upload-zone {
+    margin-bottom: 1rem;
+}
+
+#upload-modal .file-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+#upload-modal .file-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.625rem;
+}
+
+#upload-modal .file-info {
+    min-width: 0;
+}
+
+#upload-modal .file-name {
+    font-size: 0.875rem;
+}
+
+#upload-modal .file-meta {
+    font-size: 0.75rem;
+}
+
+#upload-modal .file-actions .action-button {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+#upload-modal .progress-container {
+    margin-top: 0.25rem;
+}
+
+#upload-modal .progress-text {
+    font-size: 0.625rem;
+}
+</style>
+
+<script>
+// Quick Upload Modal Management
+class QuickUploadModal {
+    constructor() {
+        this.files = new Map();
+        this.isUploading = false;
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        const modal = document.getElementById('upload-modal');
+        const uploadZone = document.getElementById('modal-upload-zone');
+        const fileInput = document.getElementById('modal-file-input');
+        const uploadBtn = document.getElementById('modal-upload-btn');
+        const clearBtn = document.getElementById('modal-clear-files');
+        
+        // Upload zone events
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            this.handleFiles(Array.from(e.dataTransfer.files));
+        });
+        
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            this.handleFiles(Array.from(e.target.files));
+        });
+        
+        // Upload button
+        uploadBtn.addEventListener('click', () => this.startUpload());
+        
+        // Clear files button
+        clearBtn.addEventListener('click', () => this.clearFiles());
+    }
+    
+    open() {
+        document.getElementById('upload-modal').style.display = 'flex';
+        this.clearFiles();
+    }
+    
+    close() {
+        document.getElementById('upload-modal').style.display = 'none';
+        this.clearFiles();
+    }
+    
+    handleFiles(files) {
+        files.forEach(file => this.addFile(file));
+        this.updateUI();
+    }
+    
+    addFile(file) {
+        // Validate file (simplified)
+        if (file.size > 50 * 1024 * 1024) {
+            this.showError('File too large: ' + file.name);
+            return;
+        }
+        
+        const fileId = 'modal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const fileData = {
+            id: fileId,
+            file: file,
+            name: file.name,
+            size: file.size,
+            status: 'pending'
+        };
+        
+        this.files.set(fileId, fileData);
+        this.renderFile(fileData);
+    }
+    
+    renderFile(fileData) {
+        const fileList = document.getElementById('modal-file-list');
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.id = `modal-file-${fileData.id}`;
+        
+        const fileType = this.getFileType(fileData.name);
+        
+        fileItem.innerHTML = `
+            <div class="file-icon ${fileType}">
+                ${fileType.toUpperCase()}
+            </div>
+            <div class="file-info">
+                <div class="file-name">${fileData.name}</div>
+                <div class="file-meta">
+                    <span class="file-size">${this.formatFileSize(fileData.size)}</span>
+                </div>
+            </div>
+            <div class="file-actions">
+                <button class="action-button action-remove" onclick="quickUploadModal.removeFile('${fileData.id}')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        fileList.appendChild(fileItem);
+    }
+    
+    removeFile(fileId) {
+        this.files.delete(fileId);
+        const fileElement = document.getElementById(`modal-file-${fileId}`);
+        if (fileElement) {
+            fileElement.remove();
+        }
+        this.updateUI();
+    }
+    
+    clearFiles() {
+        this.files.clear();
+        document.getElementById('modal-file-list').innerHTML = '';
+        document.getElementById('modal-file-input').value = '';
+        this.updateUI();
+    }
+    
+    updateUI() {
+        const hasFiles = this.files.size > 0;
+        
+        // Update file count
+        document.getElementById('modal-file-count').textContent = `${this.files.size} file(s) selected`;
+        
+        // Show/hide file list
+        document.getElementById('modal-file-list-container').style.display = hasFiles ? 'block' : 'none';
+        
+        // Enable/disable upload button
+        const uploadBtn = document.getElementById('modal-upload-btn');
+        const categorySelect = document.getElementById('modal-category');
+        uploadBtn.disabled = !hasFiles || !categorySelect.value || this.isUploading;
+        
+        // Update button text
+        if (this.isUploading) {
+            uploadBtn.textContent = 'Uploading...';
+        } else {
+            uploadBtn.textContent = 'Upload Files';
+        }
+    }
+    
+    async startUpload() {
+        if (this.files.size === 0 || this.isUploading) return;
+        
+        const form = document.getElementById('quick-upload-form');
+        const formData = new FormData(form);
+        
+        if (!formData.get('category')) {
+            this.showError('Please select a category');
+            return;
+        }
+        
+        this.isUploading = true;
+        this.updateUI();
+        this.showProgress(true);
+        
+        try {
+            let uploadedCount = 0;
+            const totalFiles = this.files.size;
+            
+            for (const [fileId, fileData] of this.files.entries()) {
+                const uploadFormData = new FormData();
+                const uploadId = 'modal_upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                uploadFormData.append('file', fileData.file);
+                uploadFormData.append('upload_id', uploadId);
+                uploadFormData.append('category', formData.get('category'));
+                uploadFormData.append('title', formData.get('title') || '');
+                uploadFormData.append('description', formData.get('description') || '');
+                
+                const response = await fetch('/api/v1/uploads/upload-with-progress', {
+                    method: 'POST',
+                    body: uploadFormData,
+                    headers: {
+                        'Authorization': `Bearer ${this.getAuthToken()}`
+                    }
+                });
+                
+                if (response.ok) {
+                    uploadedCount++;
+                } else {
+                    console.error('Upload failed for', fileData.name);
+                }
+                
+                // Update progress
+                const progress = (uploadedCount / totalFiles) * 100;
+                this.updateProgress(progress, `Uploaded ${uploadedCount}/${totalFiles} files`);
+            }
+            
+            this.showSuccess(`Successfully uploaded ${uploadedCount}/${totalFiles} files`);
+            
+            // Refresh the main document list if available
+            if (window.documentManager) {
+                setTimeout(() => {
+                    window.documentManager.loadDocuments();
+                }, 1000);
+            }
+            
+            // Close modal after success
+            setTimeout(() => {
+                this.close();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showError('Upload failed: ' + error.message);
+        } finally {
+            this.isUploading = false;
+            this.updateUI();
+            this.showProgress(false);
+        }
+    }
+    
+    showProgress(show) {
+        document.getElementById('modal-upload-progress').style.display = show ? 'block' : 'none';
+        if (show) {
+            this.updateProgress(0, 'Starting upload...');
+        }
+    }
+    
+    updateProgress(percent, message) {
+        document.getElementById('modal-progress-fill').style.width = `${percent}%`;
+        document.getElementById('modal-progress-text').textContent = `${Math.round(percent)}%`;
+        document.getElementById('modal-progress-message').textContent = message;
+    }
+    
+    getFileType(filename) {
+        const extension = filename.split('.').pop().toLowerCase();
+        const typeMap = {
+            'pdf': 'pdf',
+            'jpg': 'img', 'jpeg': 'img', 'png': 'img', 'gif': 'img',
+            'doc': 'doc', 'docx': 'doc',
+            'txt': 'txt'
+        };
+        return typeMap[extension] || 'file';
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    getAuthToken() {
+        return localStorage.getItem('auth_token') || '';
+    }
+    
+    showError(message) {
+        // Use global notification system
+        const event = new CustomEvent('showNotification', {
+            detail: { message, type: 'error' }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    showSuccess(message) {
+        // Use global notification system
+        const event = new CustomEvent('showNotification', {
+            detail: { message, type: 'success' }
+        });
+        document.dispatchEvent(event);
+    }
+}
+
+// Global instance
+let quickUploadModal;
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    quickUploadModal = new QuickUploadModal();
+});
+
+// Global functions for modal control
+function openUploadModal() {
+    quickUploadModal.open();
+}
+
+function closeUploadModal() {
+    quickUploadModal.close();
+}
+
+// Form validation
+document.getElementById('modal-category').addEventListener('change', () => {
+    quickUploadModal.updateUI();
+});
+</script>

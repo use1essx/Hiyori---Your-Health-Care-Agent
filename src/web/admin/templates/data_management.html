@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management - Healthcare AI V2{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/upload.css') }}">
+<style>
+/* Additional styles for data management */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.filter-section {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 2rem;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.documents-section {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.documents-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.documents-table th {
+    background: #f9fafb;
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.documents-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sortable-header:hover {
+    color: #1f2937;
+}
+
+.sort-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #9ca3af;
+}
+
+.pagination {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.btn-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+.btn-success {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+    border-color: #059669;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f4f6;
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bulk-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .pagination {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .modal {
+        max-width: 95vw;
+        margin: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Data Management</h1>
+            <p class="text-gray-600 mt-2">Upload, review, and manage medical documents</p>
+        </div>
+        <button id="refresh-btn" class="btn btn-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Refresh
+        </button>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div id="total-documents" class="stat-number">0</div>
+            <div class="stat-label">Total Documents</div>
+        </div>
+        <div class="stat-card">
+            <div id="pending-approval-count" class="stat-number">0</div>
+            <div class="stat-label">Pending Approval</div>
+        </div>
+        <div class="stat-card">
+            <div id="approved-count" class="stat-number">0</div>
+            <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card">
+            <div id="processing-count" class="stat-number">0</div>
+            <div class="stat-label">Processing</div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-form">
+        <h2 class="text-xl font-semibold mb-4">Upload New Documents</h2>
+        
+        <form id="upload-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="category">Category *</label>
+                    <select id="category" name="category" class="form-select" required>
+                        <option value="">Select category...</option>
+                        <option value="medical_guidelines">Medical Guidelines</option>
+                        <option value="treatment_protocols">Treatment Protocols</option>
+                        <option value="medication_info">Medication Information</option>
+                        <option value="emergency_procedures">Emergency Procedures</option>
+                        <option value="hk_health_policies">HK Health Policies</option>
+                        <option value="clinical_research">Clinical Research</option>
+                        <option value="patient_education">Patient Education</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="language">Language</label>
+                    <select id="language" name="language" class="form-select">
+                        <option value="en">English</option>
+                        <option value="zh">Traditional Chinese</option>
+                        <option value="zh-cn">Simplified Chinese</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="title">Title</label>
+                    <input type="text" id="title" name="title" class="form-input" placeholder="Document title (optional)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="tags">Tags</label>
+                    <input type="text" id="tags" name="tags" class="form-input" placeholder="Comma-separated tags">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-textarea" placeholder="Brief description of the document content..."></textarea>
+            </div>
+            
+            <div class="form-checkbox-group">
+                <input type="checkbox" id="is_sensitive" name="is_sensitive" class="form-checkbox">
+                <label for="is_sensitive" class="form-label">Contains sensitive data</label>
+            </div>
+        </form>
+
+        <!-- Category Quick Select -->
+        <div class="category-pills">
+            <div class="category-pill" data-value="medical_guidelines">Medical Guidelines</div>
+            <div class="category-pill" data-value="treatment_protocols">Treatment Protocols</div>
+            <div class="category-pill" data-value="medication_info">Medication Info</div>
+            <div class="category-pill" data-value="emergency_procedures">Emergency</div>
+            <div class="category-pill" data-value="hk_health_policies">HK Policies</div>
+        </div>
+
+        <!-- Upload Zone -->
+        <div id="upload-zone" class="upload-zone">
+            <div class="upload-zone-content">
+                <div class="upload-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                </div>
+                <div class="upload-text">Drag and drop files here</div>
+                <div class="upload-subtext">or click to browse</div>
+                <button type="button" class="upload-button">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Choose Files
+                </button>
+                <div class="upload-subtext mt-2">
+                    PDF, JPG, PNG, TXT, DOC - Max 50MB per file
+                </div>
+            </div>
+            <input type="file" id="file-input" multiple style="display: none;">
+        </div>
+
+        <!-- File List -->
+        <div id="file-list-container" style="display: none;">
+            <div class="flex justify-between items-center mt-4 mb-2">
+                <div id="file-count" class="text-sm text-gray-600">0 file(s) selected</div>
+                <div class="flex gap-2">
+                    <button id="clear-all-btn" class="btn">Clear All</button>
+                    <button id="upload-btn" class="btn btn-primary" disabled>Start Upload</button>
+                </div>
+            </div>
+            <div id="file-list" class="file-list"></div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+        <h3 class="text-lg font-semibold mb-4">Search & Filters</h3>
+        
+        <form id="filters-form">
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label class="form-label" for="search-input">Search</label>
+                    <div id="search-container" class="relative">
+                        <input type="text" id="search-input" class="form-input" placeholder="Search documents...">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="category-filter">Category</label>
+                    <select id="category-filter" class="form-select">
+                        <option value="">All categories</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="status-filter">Status</label>
+                    <select id="status-filter" class="form-select">
+                        <option value="">All statuses</option>
+                        <option value="pending_approval">Pending Approval</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="processing">Processing</option>
+                        <option value="processing_error">Error</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="date-from-filter">From Date</label>
+                    <input type="date" id="date-from-filter" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="date-to-filter">To Date</label>
+                    <input type="date" id="date-to-filter" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" id="clear-filters-btn" class="btn">Clear Filters</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Documents Section -->
+    <div class="documents-section">
+        <div class="section-header">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Documents</h3>
+                <div id="selection-counter" class="text-sm text-gray-600"></div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="select-all" class="form-checkbox">
+                <label for="select-all" class="text-sm font-medium">Select All</label>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <select id="bulk-action-select" class="form-select">
+                    <option value="">Bulk Actions</option>
+                    <option value="approve">Approve Selected</option>
+                    <option value="reject">Reject Selected</option>
+                    <option value="delete">Delete Selected</option>
+                </select>
+                <button id="apply-bulk-action" class="btn btn-primary" disabled>Apply</button>
+            </div>
+            
+            <div id="loading-indicator" class="loading-spinner" style="display: none;"></div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="table-container">
+            <table id="documents-table" class="documents-table">
+                <thead>
+                    <tr>
+                        <th width="40"></th>
+                        <th class="sortable-header" data-sort="title">
+                            Document
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th class="sortable-header" data-sort="status">
+                            Status
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th class="sortable-header" data-sort="category">
+                            Category
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th class="sortable-header" data-sort="quality_score">
+                            Quality
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th class="sortable-header" data-sort="uploaded_by">
+                            Uploaded By
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th class="sortable-header" data-sort="created_at">
+                            Date
+                            <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="documents-tbody">
+                    <!-- Documents will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div id="page-info" class="pagination-info">Showing 0-0 of 0</div>
+            
+            <div class="pagination-buttons">
+                <button id="prev-page" class="btn" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                </button>
+                <button id="next-page" class="btn" disabled>
+                    Next
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Preview Modal -->
+<div id="document-modal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="text-xl font-semibold" id="modal-title">Document Details</h3>
+            <button class="text-gray-400 hover:text-gray-600" onclick="closeDocumentModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Document details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeDocumentModal()">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/upload.js') }}"></script>
+<script src="{{ url_for('static', path='/js/file-manager.js') }}"></script>
+<script>
+// Modal functions
+function closeDocumentModal() {
+    document.getElementById('document-modal').style.display = 'none';
+}
+
+// Close modal on overlay click
+document.getElementById('document-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'document-modal') {
+        closeDocumentModal();
+    }
+});
+
+// Escape key to close modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeDocumentModal();
+    }
+});
+</script>
+{% endblock %}

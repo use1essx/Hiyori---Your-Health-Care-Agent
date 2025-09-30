@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Voice & Model Settings</title>
+  <style>
+    /* 🎨 Healthcare AI - Admin Panel Design System */
+    
+    /* CSS Variables - Healthcare AI Theme */
+    :root {
+        /* Light Mode (Default) */
+        --background: #F8F4FC;
+        --foreground: #020817;
+        --primary: #256389;
+        --primary-foreground: #FFFFFF;
+        
+        --secondary: #F3F5F9;
+        --secondary-foreground: #0F172A;
+        --accent: #E2E8F0;
+        --accent-foreground: #0F172A;
+        
+        --card: #FFFFFF;
+        --card-foreground: #020817;
+        --muted: #F3F5F9;
+        --muted-foreground: #64748B;
+        
+        --border: #E2E8F0;
+        --input: #E2E8F0;
+        --ring: #256389;
+        
+        --destructive: #EF4444;
+        --destructive-foreground: #FFFFFF;
+        --success: #22C55E;
+        --success-foreground: #FFFFFF;
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    /* Dark Mode */
+    .dark {
+        --background: #020817;
+        --foreground: #F8F4FC;
+        --primary: #3B82F6;
+        --primary-foreground: #FFFFFF;
+        
+        --secondary: #0F172A;
+        --secondary-foreground: #F8F4FC;
+        --accent: #1E293B;
+        --accent-foreground: #F8F4FC;
+        
+        --card: #0F172A;
+        --card-foreground: #F8F4FC;
+        --muted: #1E293B;
+        --muted-foreground: #94A3B8;
+        
+        --border: #334155;
+        --input: #1E293B;
+        --ring: #3B82F6;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .wrap {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .header {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header h2::before {
+        content: "⚙️";
+        font-size: 28px;
+    }
+
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 20px 0;
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--card-foreground);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--card-foreground);
+        margin-bottom: 8px;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 2px solid var(--border);
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 137, 0.1);
+        background: var(--card);
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .btn {
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn:hover {
+        background: var(--accent);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+        background: rgba(37, 99, 137, 0.9);
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: var(--success-foreground);
+        border-color: var(--success);
+    }
+
+    .btn-danger {
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+        border-color: var(--destructive);
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+
+    a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    .status-indicator {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    .status-online {
+        background: var(--success);
+        color: var(--success-foreground);
+    }
+
+    .status-offline {
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+    }
+
+    .model-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        margin: 12px 0;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        background: var(--secondary);
+        transition: all 0.2s ease;
+    }
+
+    .model-item:hover {
+        box-shadow: var(--shadow-sm);
+    }
+
+    .model-toggle {
+        width: auto;
+        margin-left: 12px;
+    }
+
+    .model-enabled {
+        border-color: var(--success);
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    .model-disabled {
+        border-color: var(--destructive);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .nav-links {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: var(--muted);
+        border-radius: 12px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .nav-links a {
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .wrap {
+            padding: 16px;
+        }
+        
+        .row {
+            grid-template-columns: 1fr;
+        }
+        
+        .header {
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav-links">
+      <a href="./index.html">← Back to Live2D Chat</a>
+      <span>|</span>
+      <a href="./index.html?debug=true">🧪 Open Chat with Debug Mode</a>
+    </div>
+    
+    <div class="header">
+      <h2>Admin — Voice & Model Settings</h2>
+    </div>
+
+    <div class="card">
+      <h3>📊 System Status</h3>
+      <div>
+        <strong>Browser TTS:</strong> <span id="browserStatus" class="status-indicator">Checking...</span><br>
+        <strong>Local TTS Server:</strong> <span id="localStatus" class="status-indicator">Checking...</span><br>
+        <strong>Available Voices:</strong> <span id="voiceCount">0</span><br>
+        <strong>Available Models:</strong> <span id="modelCount">0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎭 Live2D Models</h3>
+      <p>Enable/disable which models appear in the chatbot dropdown.</p>
+      <div id="modelsContainer">
+        <p>Loading models...</p>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="saveModelsBtn">💾 Save Settings</button>
+        <button class="btn" id="refreshModelsBtn">🔄 Refresh</button>
+        <button class="btn btn-success" id="enableAllBtn">✅ Enable All</button>
+        <button class="btn btn-danger" id="disableAllBtn">❌ Disable All</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔊 Voice Settings</h3>
+      <div class="row">
+        <div>
+          <label>UI / TTS Language</label>
+          <select id="language">
+            <option value="zh-HK">zh-HK (Cantonese)</option>
+            <option value="en-US">en-US</option>
+          </select>
+        </div>
+        <div>
+          <label>STT Engine</label>
+          <select id="sttEngine">
+            <option value="browser">Browser STT</option>
+            <option value="local-whisper">Local Whisper</option>
+            <!-- AWS_TODO: <option value="aws-transcribe">AWS Transcribe</option> -->
+          </select>
+          <span id="sttStatus" style="margin-left:8px;font-size:12px;opacity:.8">checking…</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div>
+          <label>TTS Engine</label>
+          <select id="ttsEngine">
+            <option value="browser">Browser</option>
+            <option value="local-os">Local OS</option>
+            <!-- AWS_TODO: <option value="aws-polly">AWS Polly</option> -->
+          </select>
+        </div>
+        <div>
+          <label>Voice</label>
+          <select id="voiceSelect"></select>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label>Test line</label>
+        <input id="testText" placeholder="Hello! This is a test."/>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn" id="testBtn">🎤 Test Speak</button>
+        <button class="btn btn-primary" id="saveBtn">💾 Save Settings</button>
+        <button class="btn btn-danger" id="resetBtn">🔄 Reset All</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎵 Custom Voices</h3>
+      <div class="row">
+        <div><label>Name</label><input id="cv_name" placeholder="My Cantonese Voice"/></div>
+        <div><label>Engine</label>
+          <select id="cv_engine">
+            <option value="local-os">local-os</option>
+            <option value="browser">browser</option>
+            <!-- AWS_TODO: <option value="aws-polly">aws-polly</option> -->
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div><label>VoiceId/Name</label><input id="cv_voice" placeholder="e.g., Microsoft Tracy / com.apple.voice.en..."/></div>
+        <div><label>Lang</label><input id="cv_lang" placeholder="zh-HK / en-US"/></div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary" id="cv_add">➕ Add Custom Voice</button>
+      </div>
+      <h4 style="margin-top:16px">Current</h4>
+      <ul id="cv_list"></ul>
+    </div>
+
+    <div class="card">
+      <h3>🧪 Testing Tools</h3>
+      <p>Debug and test the chatbot's STT/TTS functionality. These tools help diagnose issues with speech recognition and microphone access.</p>
+      
+      <div style="margin: 16px 0; padding: 16px; background: var(--secondary); border-radius: 8px; border-left: 4px solid var(--primary);">
+        <strong>🎯 STT Testing:</strong>
+        <div style="margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-danger" id="testSTTBtn">🧪 Test STT Result Handler</button>
+          <button class="btn" id="testInputBtn">📝 Test Text Input Field</button>
+          <button class="btn btn-success" id="testMicBtn">🎙️ Test Microphone Access</button>
+        </div>
+        <p style="margin-top: 8px; font-size: 13px; opacity: 0.8;">
+          Use these to test if STT results are properly handled, text input works, and microphone permissions are granted.
+        </p>
+      </div>
+
+      <div style="margin: 16px 0; padding: 16px; background: var(--secondary); border-radius: 8px; border-left: 4px solid var(--success);">
+        <strong>🔍 Debug Information:</strong>
+        <div style="margin-top: 8px;">
+          <button class="btn" id="debugInfoBtn">📊 Show Debug Info</button>
+          <button class="btn" id="openDebugChatBtn">🚀 Open Chat with Debug Mode</button>
+        </div>
+        <p style="margin-top: 8px; font-size: 13px; opacity: 0.8;">
+          Access detailed debugging information and open the chatbot with debug logging enabled.
+        </p>
+      </div>
+
+      <div id="testResults" style="margin-top: 16px; padding: 12px; background: var(--muted); border-radius: 8px; display: none;">
+        <h4>Test Results:</h4>
+        <div id="testOutput" style="font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+        <button class="btn" onclick="clearTestResults()" style="margin-top: 8px;">🧹 Clear Results</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🖥️ Local TTS Setup</h3>
+      <p>To use the Local OS TTS engine with downloadable audio, you need to run a local server.</p>
+      <h4>Quick Setup (Windows):</h4>
+      <pre style="background:#000;padding:10px;border-radius:6px;font-size:12px;">pip install fastapi uvicorn[standard] pywin32
+# Save the Windows TTS script as 'tts_local_windows.py'
+uvicorn tts_local_windows:app --port 8787 --reload</pre>
+      
+      <h4>Quick Setup (macOS):</h4>
+      <pre style="background:#000;padding:10px;border-radius:6px;font-size:12px;">pip install fastapi uvicorn[standard]
+# Save the macOS TTS script as 'tts_local_macos.py'
+uvicorn tts_local_macos:app --port 8787 --reload</pre>
+      
+      <p>Server will run at: <strong>http://localhost:8787</strong></p>
+      <p>Test URL: <a href="http://localhost:8787/voices" target="_blank">http://localhost:8787/voices</a></p>
+    </div>
+  </div>
+
+  <script>
+  // Settings storage
+  const KEY = 'live2d_voice_settings_v1';
+  const MODEL_KEY = 'live2d_model_settings_v1';
+  const DEFAULTS = {
+    language: 'zh-HK',
+    sttLanguage: 'zh-HK',
+    ttsEngine: 'browser',
+    preferredVoices: { 'zh-HK': { engine:'browser', voiceId:null } },
+    customVoices: [],
+    ttsServerBase: 'http://localhost:8787',
+  };
+
+  function load(){ try{ return {...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY)||'{}')}; }catch{ return {...DEFAULTS}; } }
+  function save(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+  function loadModels(){ try{ return JSON.parse(localStorage.getItem(MODEL_KEY)||'{}'); }catch{ return {}; } }
+  function saveModels(m){ localStorage.setItem(MODEL_KEY, JSON.stringify(m)); }
+
+  const s = load();
+  let currentModels = {};
+
+  const lang = document.getElementById('language');
+  const sttEng = document.getElementById('sttEngine');
+  const eng  = document.getElementById('ttsEngine');
+  const vsel = document.getElementById('voiceSelect');
+  const test = document.getElementById('testText');
+
+  lang.value = s.language; 
+  sttEng.value = localStorage.getItem('sttEngine') || 'browser';
+  eng.value = s.ttsEngine;
+
+  // Model Management Functions
+  async function loadModelsFromServer() {
+    try {
+      const response = await fetch('/api/admin/models');
+      if (response.ok) {
+        const data = await response.json();
+        currentModels = data.models || {};
+        document.getElementById('modelCount').textContent = Object.keys(currentModels).length;
+        renderModels();
+      } else {
+        throw new Error('Failed to fetch models');
+      }
+    } catch (error) {
+      console.error('Error loading models:', error);
+      document.getElementById('modelsContainer').innerHTML = '<p style="color:#ef4444;">❌ Error loading models from server</p>';
+    }
+  }
+
+  function renderModels() {
+    const container = document.getElementById('modelsContainer');
+    const savedSettings = loadModels();
+    
+    if (Object.keys(currentModels).length === 0) {
+      container.innerHTML = '<p>No models found</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    
+    Object.entries(currentModels).forEach(([modelName, modelData]) => {
+      const isEnabled = savedSettings[modelName] !== false; // Default to enabled
+      
+      const modelDiv = document.createElement('div');
+      modelDiv.className = `model-item ${isEnabled ? 'model-enabled' : 'model-disabled'}`;
+      
+      modelDiv.innerHTML = `
+        <div>
+          <strong>🎭 ${modelName}</strong>
+          <small style="opacity:0.7;margin-left:10px;">${modelData.file || 'model3.json'}</small>
+        </div>
+        <label style="display:flex;align-items:center;margin:0;">
+          <input type="checkbox" class="model-toggle" data-model="${modelName}" ${isEnabled ? 'checked' : ''}>
+          <span style="margin-left:8px;">${isEnabled ? '✅ Enabled' : '❌ Disabled'}</span>
+        </label>
+      `;
+      
+      container.appendChild(modelDiv);
+    });
+
+    // Add event listeners for toggles
+    container.querySelectorAll('.model-toggle').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const modelName = e.target.dataset.model;
+        const modelDiv = e.target.closest('.model-item');
+        const span = e.target.nextElementSibling;
+        
+        if (e.target.checked) {
+          modelDiv.className = 'model-item model-enabled';
+          span.textContent = '✅ Enabled';
+        } else {
+          modelDiv.className = 'model-item model-disabled';
+          span.textContent = '❌ Disabled';
+        }
+      });
+    });
+  }
+
+  async function saveModelSettings() {
+    const settings = {};
+    document.querySelectorAll('.model-toggle').forEach(checkbox => {
+      const modelName = checkbox.dataset.model;
+      settings[modelName] = checkbox.checked;
+    });
+    
+    try {
+      // Save to localStorage
+      saveModels(settings);
+      
+      // Send to server
+      const response = await fetch('/api/admin/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ models: settings })
+      });
+      
+      if (response.ok) {
+        alert('✅ Model settings saved! Changes will apply on chatbot reload.');
+      } else {
+        throw new Error('Server save failed');
+      }
+    } catch (error) {
+      console.error('Error saving models:', error);
+      alert('⚠️ Settings saved locally, but server update failed. Changes will still apply on reload.');
+    }
+  }
+
+  function enableAllModels() {
+    document.querySelectorAll('.model-toggle').forEach(checkbox => {
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change'));
+    });
+  }
+
+  function disableAllModels() {
+    document.querySelectorAll('.model-toggle').forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('change'));
+    });
+  }
+
+  // System Status Check
+  async function checkSystemStatus() {
+    const browserStatus = document.getElementById('browserStatus');
+    const localStatus = document.getElementById('localStatus');
+    const voiceCount = document.getElementById('voiceCount');
+
+    if ('speechSynthesis' in window) {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        browserStatus.textContent = 'Available';
+        browserStatus.className = 'status-indicator status-online';
+        voiceCount.textContent = voices.length;
+      } else {
+        browserStatus.textContent = 'Loading...';
+        browserStatus.className = 'status-indicator status-offline';
+        speechSynthesis.addEventListener('voiceschanged', () => {
+          const newVoices = speechSynthesis.getVoices();
+          browserStatus.textContent = 'Available';
+          browserStatus.className = 'status-indicator status-online';
+          voiceCount.textContent = newVoices.length;
+          populate();
+        });
+      }
+    } else {
+      browserStatus.textContent = 'Not Supported';
+      browserStatus.className = 'status-indicator status-offline';
+    }
+
+    // Check local TTS server
+    try {
+      const response = await fetch((s.ttsServerBase||'http://localhost:8787')+'/voices');
+      if (response.ok) {
+        localStatus.textContent = 'Online';
+        localStatus.className = 'status-indicator status-online';
+      } else {
+        localStatus.textContent = 'Error';
+        localStatus.className = 'status-indicator status-offline';
+      }
+    } catch (error) {
+      localStatus.textContent = 'Offline';
+      localStatus.className = 'status-indicator status-offline';
+    }
+    
+    // Check local STT server status
+    checkSTTStatus();
+  }
+  
+  // STT Server Status Check
+  async function checkSTTStatus() {
+    const sttStatus = document.getElementById('sttStatus');
+    try {
+      const response = await fetch('http://localhost:8790/health');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.whisper_status === 'available') {
+          sttStatus.textContent = `Local Whisper ✓ (${data.whisper_model})`;
+          sttStatus.style.color = '#22c55e';
+        } else {
+          sttStatus.textContent = 'Local Whisper ✗ (model not loaded)';
+          sttStatus.style.color = '#ef4444';
+        }
+      } else {
+        sttStatus.textContent = 'Local Whisper ✗ (server error)';
+        sttStatus.style.color = '#ef4444';
+      }
+    } catch (error) {
+      sttStatus.textContent = 'Local Whisper ✗ (server not found)';
+      sttStatus.style.color = '#ef4444';
+    }
+  }
+
+  async function populate(){
+    vsel.innerHTML = '';
+    if (eng.value === 'browser') {
+      const ready = new Promise(r=>{
+        if (speechSynthesis.getVoices().length) r(); else speechSynthesis.addEventListener('voiceschanged', r, {once:true});
+      });
+      await ready;
+      speechSynthesis.getVoices().forEach(v=>{
+        const o = document.createElement('option');
+        o.value = v.name; o.textContent = `${v.name} (${v.lang})`; vsel.appendChild(o);
+      });
+    } else if (eng.value === 'local-os') {
+      try {
+        const r = await fetch((s.ttsServerBase||'http://localhost:8787')+'/voices');
+        const arr = r.ok ? await r.json() : [];
+        arr.forEach(v=>{
+          const o = document.createElement('option');
+          o.value = v.id; o.textContent = `${v.name}${v.lang?' ('+v.lang+')':''}`; vsel.appendChild(o);
+        });
+      } catch { vsel.innerHTML = '<option>Local TTS not running</option>'; }
+    }
+    const pref = (s.preferredVoices && s.preferredVoices[s.language]) || {};
+    if (pref.voiceId) vsel.value = pref.voiceId;
+  }
+  
+  // Event Listeners
+  document.getElementById('saveModelsBtn').addEventListener('click', saveModelSettings);
+  document.getElementById('refreshModelsBtn').addEventListener('click', loadModelsFromServer);
+  document.getElementById('enableAllBtn').addEventListener('click', enableAllModels);
+  document.getElementById('disableAllBtn').addEventListener('click', disableAllModels);
+
+  populate();
+  checkSystemStatus();
+  loadModelsFromServer();
+  eng.addEventListener('change', populate);
+  lang.addEventListener('change', populate);
+  
+  // STT Engine change handler
+  sttEng.addEventListener('change', (e) => {
+    localStorage.setItem('sttEngine', e.target.value);
+    checkSTTStatus(); // Recheck server status when engine changes
+  });
+
+  document.getElementById('testBtn').addEventListener('click', async ()=>{
+    const txt = test.value.trim() || 'Hello from Admin page!';
+    if (eng.value === 'browser') {
+      const u = new SpeechSynthesisUtterance(txt);
+      u.lang = lang.value; const vs = speechSynthesis.getVoices(); const v = vs.find(x=>x.name===vsel.value); if (v) u.voice=v;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } else {
+      const base = s.ttsServerBase || 'http://localhost:8787';
+      try {
+        const r = await fetch(base+'/local-tts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text:txt, lang:lang.value, voiceId:vsel.value }) });
+        const blob = await r.blob(); const url = URL.createObjectURL(blob); new Audio(url).play(); setTimeout(()=>URL.revokeObjectURL(url), 8000);
+      } catch (error) {
+        alert('Local TTS server error: ' + error.message);
+      }
+    }
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', ()=>{
+    s.language = lang.value; s.sttLanguage = sttEng.value; s.ttsEngine = eng.value;
+    s.preferredVoices = s.preferredVoices || {}; s.preferredVoices[s.language] = { engine:eng.value, voiceId:vsel.value };
+    save(s); alert('✅ Voice settings saved! Back on chat page, reload to apply.');
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if (confirm('⚠️ This will reset ALL settings (voice AND model). Are you sure?')) {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem(MODEL_KEY);
+      alert('✅ All settings reset! Reload both pages.');
+    }
+  });
+
+  // Custom voices
+  const cv = { name: document.getElementById('cv_name'), engine: document.getElementById('cv_engine'), voice: document.getElementById('cv_voice'), lang: document.getElementById('cv_lang'), add: document.getElementById('cv_add') };
+  const cvList = document.getElementById('cv_list');
+
+  function refreshCV(){
+    cvList.innerHTML = '';
+    (s.customVoices||[]).forEach((it, i)=>{
+      const li = document.createElement('li');
+      li.textContent = `${it.name} — ${it.engine} / ${it.voiceId || '?'} ${it.lang? '('+it.lang+')':''}`;
+      const del = document.createElement('button'); del.className='btn'; del.textContent='🗑️ Delete';
+      del.onclick = ()=>{ s.customVoices.splice(i,1); save(s); refreshCV(); };
+      li.appendChild(del); cvList.appendChild(li);
+    });
+  }
+  refreshCV();
+
+  cv.add.addEventListener('click', ()=>{
+    const item = { name: cv.name.value.trim(), engine: cv.engine.value, voiceId: cv.voice.value.trim(), lang: cv.lang.value.trim() || null };
+    if (!item.name) return alert('Name required.');
+    s.customVoices = s.customVoices || []; s.customVoices.push(item); save(s);
+    cv.name.value = cv.voice.value = cv.lang.value = ''; refreshCV();
+  });
+
+  // Auto-refresh status every 30 seconds
+  setInterval(checkSystemStatus, 30000);
+
+  // === TESTING TOOLS ===
+  function logTestResult(message) {
+    const testResults = document.getElementById('testResults');
+    const testOutput = document.getElementById('testOutput');
+    testResults.style.display = 'block';
+    
+    const timestamp = new Date().toLocaleTimeString();
+    testOutput.textContent += `[${timestamp}] ${message}\n`;
+    testOutput.scrollTop = testOutput.scrollHeight;
+  }
+
+  function clearTestResults() {
+    document.getElementById('testOutput').textContent = '';
+    document.getElementById('testResults').style.display = 'none';
+  }
+
+  // Test STT Result Handler
+  document.getElementById('testSTTBtn').addEventListener('click', () => {
+    logTestResult('🧪 Testing STT Result Handler...');
+    
+    // Open chatbot in new window and test STT
+    const chatWindow = window.open('./index.html?debug=true', '_blank');
+    
+    setTimeout(() => {
+      try {
+        if (chatWindow && chatWindow.testSTTResult) {
+          chatWindow.testSTTResult('Admin Test: Hello from testing tools!');
+          logTestResult('✅ STT Result Handler test sent to chatbot window');
+        } else {
+          logTestResult('❌ Could not access chatbot window (popup blocked or debug mode not active)');
+        }
+      } catch (error) {
+        logTestResult(`❌ STT test error: ${error.message}`);
+      }
+    }, 2000);
+  });
+
+  // Test Text Input Field
+  document.getElementById('testInputBtn').addEventListener('click', () => {
+    logTestResult('📝 Testing Text Input Field...');
+    
+    // Open chatbot in new window and test input
+    const chatWindow = window.open('./index.html', '_blank');
+    
+    setTimeout(() => {
+      try {
+        const textInput = chatWindow.document.getElementById('textInput');
+        if (textInput) {
+          textInput.value = 'Admin Test: Text input working!';
+          textInput.style.backgroundColor = '#90EE90';
+          setTimeout(() => textInput.style.backgroundColor = '', 2000);
+          logTestResult('✅ Text input field test successful');
+        } else {
+          logTestResult('❌ Text input field not found in chatbot');
+        }
+      } catch (error) {
+        logTestResult(`❌ Text input test error: ${error.message}`);
+      }
+    }, 2000);
+  });
+
+  // Test Microphone Access
+  document.getElementById('testMicBtn').addEventListener('click', () => {
+    logTestResult('🎙️ Testing Microphone Access...');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        logTestResult('✅ Microphone access granted');
+        
+        // Test simple STT
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR) {
+          const testRecognition = new SR();
+          testRecognition.lang = 'en-US';
+          testRecognition.continuous = false;
+          testRecognition.interimResults = true;
+          
+          testRecognition.onstart = () => {
+            logTestResult('🎤 Speech recognition started - say "HELLO ADMIN"');
+          };
+          
+          testRecognition.onresult = (e) => {
+            const result = e.results[0][0].transcript;
+            logTestResult(`🎤 Speech detected: "${result}"`);
+          };
+          
+          testRecognition.onerror = (e) => {
+            logTestResult(`❌ Speech recognition error: ${e.error}`);
+          };
+          
+          testRecognition.onend = () => {
+            logTestResult('🎤 Speech recognition ended');
+          };
+          
+          testRecognition.start();
+        } else {
+          logTestResult('❌ SpeechRecognition not supported in this browser');
+        }
+        
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+      })
+      .catch(err => {
+        logTestResult(`❌ Microphone access denied: ${err.message}`);
+      });
+  });
+
+  // Show Debug Info
+  document.getElementById('debugInfoBtn').addEventListener('click', () => {
+    logTestResult('📊 Gathering Debug Information...');
+    
+    const info = {
+      userAgent: navigator.userAgent,
+      speechSynthesis: 'speechSynthesis' in window,
+      speechRecognition: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+      mediaDevices: 'mediaDevices' in navigator,
+      voices: speechSynthesis.getVoices().length,
+      localStorage: !!localStorage.getItem('sttEngine'),
+      protocol: window.location.protocol,
+      host: window.location.host
+    };
+    
+    logTestResult('=== DEBUG INFORMATION ===');
+    Object.entries(info).forEach(([key, value]) => {
+      logTestResult(`${key}: ${value}`);
+    });
+    logTestResult('=== END DEBUG INFO ===');
+  });
+
+  // Open Chat with Debug Mode
+  document.getElementById('openDebugChatBtn').addEventListener('click', () => {
+    const debugUrl = './index.html?debug=true';
+    window.open(debugUrl, '_blank');
+    logTestResult('🚀 Opened chatbot with debug mode enabled');
+  });
+

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare AI V2 - Chat Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .chat-header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .agent-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .agent-selector select {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .agent-selector select option {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .agent-badge {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .hk-facilities {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .hk-facilities h4 {
+            font-size: 12px;
+            color: #7c3aed;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .facility-item {
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .facility-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .facility-district {
+            color: #6b7280;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 22px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            font-size: 18px;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 70%;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            border-left: 4px solid #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .agent-selector {
+                position: static;
+                margin-top: 10px;
+            }
+
+            .status-indicator {
+                position: static;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <h1>🏥 Healthcare AI V2</h1>
+            <div class="subtitle">Intelligent Healthcare Assistant for Hong Kong</div>
+            <div class="agent-selector">
+                <select id="agentSelect">
+                    <option value="">Auto-select Agent</option>
+                    <option value="illness_monitor">慧心助手 (Illness Monitor)</option>
+                    <option value="mental_health">小星星 (Mental Health)</option>
+                    <option value="safety_guardian">Safety Guardian</option>
+                    <option value="wellness_coach">Wellness Coach</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div>Hello! I'm your Healthcare AI assistant. I can help you with:</div>
+                    <ul style="margin: 12px 0; padding-left: 20px;">
+                        <li>Health concerns and symptoms</li>
+                        <li>Mental health support</li>
+                        <li>Emergency guidance</li>
+                        <li>Wellness and prevention tips</li>
+                        <li>Hong Kong healthcare facility information</li>
+                    </ul>
+                    <div>How can I assist you today?</div>
+                    <div class="message-meta">
+                        <span class="agent-badge">System</span>
+                        <span>Just now</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea 
+                    id="messageInput" 
+                    class="input-field" 
+                    placeholder="Type your health question here..."
+                    rows="1"
+                ></textarea>
+                <button id="sendButton" class="send-button">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HealthcareAIChat {
+            constructor() {
+                this.baseUrl = 'http://localhost:8000';
+                this.sessionId = this.generateSessionId();
+                this.userId = `web_user_${Date.now()}`;
+                
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.agentSelect = document.getElementById('agentSelect');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.statusDot = document.getElementById('statusDot');
+                this.statusText = document.getElementById('statusText');
+                
+                this.init();
+            }
+
+            generateSessionId() {
+                return 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.checkServerStatus();
+                
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', (e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                });
+            }
+
+            setupEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            async checkServerStatus() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/health`);
+                    if (response.ok) {
+                        this.setStatus(true, 'Connected');
+                    } else {
+                        this.setStatus(false, 'Server Error');
+                    }
+                } catch (error) {
+                    this.setStatus(false, 'Disconnected');
+                    this.showError('Cannot connect to Healthcare AI server. Please ensure the server is running on http://localhost:8000');
+                }
+            }
+
+            setStatus(connected, text) {
+                this.statusDot.className = `status-dot ${connected ? 'connected' : ''}`;
+                this.statusText.textContent = text;
+            }
+
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                this.chatMessages.appendChild(errorDiv);
+                this.scrollToBottom();
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message) return;
+
+                // Clear input and disable send button
+                this.messageInput.value = '';
+                this.messageInput.style.height = 'auto';
+                this.sendButton.disabled = true;
+
+                // Add user message to chat
+                this.addMessage('user', message);
+
+                // Show typing indicator
+                this.showTyping();
+
+                try {
+                    const response = await fetch(`${this.baseUrl}/api/v1/agents/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_input: message,
+                            session_id: this.sessionId,
+                            user_id: this.userId,
+                            language_preference: 'auto',
+                            preferred_agent: this.agentSelect.value || null
+                        })
+                    });
+
+                    this.hideTyping();
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.addAIMessage(data);
+                    } else {
+                        const errorText = await response.text();
+                        this.showError(`Server error (${response.status}): ${errorText}`);
+                    }
+                } catch (error) {
+                    this.hideTyping();
+                    this.showError(`Connection error: ${error.message}`);
+                } finally {
+                    this.sendButton.disabled = false;
+                    this.messageInput.focus();
+                }
+            }
+
+            addMessage(type, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = type === 'user' ? '👤' : '🤖';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = content;
+
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'message-meta';
+                metaDiv.innerHTML = `<span>${new Date().toLocaleTimeString()}</span>`;
+
+                contentDiv.appendChild(metaDiv);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
+
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            addAIMessage(data) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ai';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                
+                // Set avatar based on agent type
+                const agentEmojis = {
+                    'illness_monitor': '🩺',
+                    'mental_health': '⭐',
+                    'safety_guardian': '🚨',
+                    'wellness_coach': '💪'
+                };
+                avatar.textContent = agentEmojis[data.agent_type] || '🤖';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+
+                // Main response content
+                const responseText = document.createElement('div');
+                responseText.textContent = data.response || data.content || 'No response';
+                contentDiv.appendChild(responseText);
+
+                // HK facilities if present
+                if (data.hk_facilities && data.hk_facilities.length > 0) {
+                    const facilitiesDiv = document.createElement('div');
+                    facilitiesDiv.className = 'hk-facilities';
+                    
+                    const facilitiesTitle = document.createElement('h4');
+                    facilitiesTitle.innerHTML = '🏥 Hong Kong Healthcare Facilities:';
+                    facilitiesDiv.appendChild(facilitiesTitle);
+
+                    data.hk_facilities.slice(0, 3).forEach(facility => {
+                        const facilityDiv = document.createElement('div');
+                        facilityDiv.className = 'facility-item';
+                        
+                        const name = document.createElement('div');
+                        name.className = 'facility-name';
+                        name.textContent = facility.name_en || 'Unknown Facility';
+                        
+                        const district = document.createElement('div');
+                        district.className = 'facility-district';
+                        district.textContent = facility.district || 'Unknown District';
+                        
+                        facilityDiv.appendChild(name);
+                        facilityDiv.appendChild(district);
+                        facilitiesDiv.appendChild(facilityDiv);
+                    });
+
+                    contentDiv.appendChild(facilitiesDiv);
+                }
+
+                // Message metadata
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'message-meta';
+                
+                const agentName = this.getAgentName(data.agent_type);
+                const confidence = data.confidence ? `${Math.round(data.confidence * 100)}%` : 'N/A';
+                const processingTime = data.processing_time_ms ? `${data.processing_time_ms}ms` : '';
+                
+                metaDiv.innerHTML = `
+                    <div>
+                        <span class="agent-badge">${agentName}</span>
+                        <span style="margin-left: 8px; font-size: 10px;">Confidence: ${confidence}</span>
+                    </div>
+                    <span>${new Date().toLocaleTimeString()} ${processingTime}</span>
+                `;
+
+                contentDiv.appendChild(metaDiv);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
+
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            getAgentName(agentType) {
+                const names = {
+                    'illness_monitor': '慧心助手',
+                    'mental_health': '小星星',
+                    'safety_guardian': 'Safety Guardian',
+                    'wellness_coach': 'Wellness Coach'
+                };
+                return names[agentType] || 'AI Assistant';
+            }
+
+            showTyping() {
+                this.typingIndicator.style.display = 'block';
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+        }
+
+        // Initialize the chat when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new HealthcareAIChat();
+        });
+    </script>
+</body>
+</html>

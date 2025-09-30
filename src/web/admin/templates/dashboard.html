@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Healthcare AI V2 Admin{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Quick Stats Overview -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <!-- Active Users -->
+        <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-healthcare-blue rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
+                            <dd class="text-lg font-medium text-gray-900" x-text="formatNumber(metrics.users?.active || 0)">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="text-gray-500">Total:</span>
+                    <span class="font-medium text-gray-900" x-text="formatNumber(metrics.users?.total || 0)">0</span>
+                    <span class="text-gray-400 ml-2">users</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-healthcare-green rounded-lg flex items-center justify-center">
+                            <i class="fas fa-heartbeat text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">System Health</dt>
+                            <dd class="flex items-center">
+                                <span class="text-lg font-medium text-gray-900 capitalize" 
+                                      x-text="metrics.system?.status || 'Unknown'">Unknown</span>
+                                <div class="ml-2 w-3 h-3 rounded-full"
+                                     :class="getStatusClass(metrics.system?.status || 'unknown')"></div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm text-gray-500">
+                    <span>CPU:</span>
+                    <span class="font-medium" x-text="formatPercent(metrics.system?.cpu_percent || 0)">0%</span>
+                    <span class="ml-3">Memory:</span>
+                    <span class="font-medium" x-text="formatPercent(metrics.system?.memory_percent || 0)">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Pipeline -->
+        <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-healthcare-yellow rounded-lg flex items-center justify-center">
+                            <i class="fas fa-database text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">HK Data Pipeline</dt>
+                            <dd class="flex items-center">
+                                <span class="text-lg font-medium text-gray-900 capitalize" 
+                                      x-text="metrics.pipeline?.status || 'Unknown'">Unknown</span>
+                                <div class="ml-2 w-3 h-3 rounded-full"
+                                     :class="getStatusClass(metrics.pipeline?.status || 'unknown')"></div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm text-gray-500">
+                    <span x-text="(metrics.pipeline?.sources_online || 0) + '/' + (metrics.pipeline?.total_sources || 11)">0/11</span>
+                    <span>sources online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Status -->
+        <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-healthcare-red rounded-lg flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Security</dt>
+                            <dd class="flex items-center">
+                                <span class="text-lg font-medium text-gray-900 capitalize" 
+                                      x-text="metrics.security?.status || 'Unknown'">Unknown</span>
+                                <div class="ml-2 w-3 h-3 rounded-full"
+                                     :class="getStatusClass(metrics.security?.status || 'unknown')"></div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm text-gray-500">
+                    <span x-text="metrics.security?.alerts_today || 0">0</span>
+                    <span>alerts today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- System Performance Chart -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">System Performance</h3>
+                <p class="text-sm text-gray-500">CPU and Memory usage over time</p>
+            </div>
+            <div class="p-6">
+                <div class="chart-container">
+                    <canvas id="systemPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Activity Chart -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">User Activity</h3>
+                <p class="text-sm text-gray-500">Active users and sessions</p>
+            </div>
+            <div class="p-6">
+                <div class="chart-container">
+                    <canvas id="userActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Sources and Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- HK Data Sources Status -->
+        <div class="lg:col-span-2 bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">HK Data Sources</h3>
+                        <p class="text-sm text-gray-500">Real-time status of government data feeds</p>
+                    </div>
+                    <button @click="refreshMetrics()" 
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-sync-alt mr-2" :class="{ 'animate-spin': loading }"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <!-- Sample data sources -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Hospital Authority - A&E Wait Times</p>
+                                <p class="text-xs text-gray-500">Last updated: 12 minutes ago</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-clock mr-1"></i>
+                            15min refresh
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Department of Health - Clinic Directory</p>
+                                <p class="text-xs text-gray-500">Last updated: 2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-clock mr-1"></i>
+                            6hr refresh
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Environmental Data - Air Quality</p>
+                                <p class="text-xs text-gray-500">Last updated: 4 hours ago (delayed)</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Delayed
+                        </div>
+                    </div>
+
+                    <!-- Progress indicator for data freshness -->
+                    <div class="mt-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-2">
+                            <span>Overall Data Freshness</span>
+                            <span x-text="`${Math.round(85)}%`">85%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-healthcare-green h-2 rounded-full progress-bar" 
+                                 style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
+                <p class="text-sm text-gray-500">Latest system events</p>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar" x-data="{ recentActivity: [] }" 
+                     x-init="loadRecentActivity()">
+                    
+                    <template x-for="activity in recentActivity" :key="activity.timestamp">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-2 h-2 rounded-full mt-2"
+                                     :class="{
+                                         'bg-green-400': activity.severity === 'info',
+                                         'bg-yellow-400': activity.severity === 'warning',
+                                         'bg-red-400': activity.severity === 'error'
+                                     }"></div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900" x-text="activity.description"></p>
+                                <p class="text-xs text-gray-500" x-text="timeAgo(activity.timestamp)"></p>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Loading state -->
+                    <template x-if="recentActivity.length === 0">
+                        <div class="text-center py-4 text-gray-500">
+                            <i class="fas fa-spinner fa-spin mb-2"></i>
+                            <p class="text-sm">Loading recent activity...</p>
+                        </div>
+                    </template>
+                </div>
+                
+                <div class="mt-6">
+                    <a href="/admin/system/logs" 
+                       class="block text-sm text-healthcare-blue hover:text-healthcare-blue/80 text-center">
+                        View all activity →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dashboard specific JavaScript
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dashboardData', () => ({
+        charts: {},
+        
+        async loadRecentActivity() {
+            try {
+                const response = await fetch('/api/v1/admin/recent-activity?limit=10');
+                if (response.ok) {
+                    this.recentActivity = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                this.recentActivity = [];
+            }
+        }
+    }));
+});
+
+// Chart initialization and updates
+let systemPerformanceChart = null;
+let userActivityChart = null;
+
+function initializeCharts() {
+    // System Performance Chart
+    const systemCtx = document.getElementById('systemPerformanceChart');
+    if (systemCtx) {
+        systemPerformanceChart = new Chart(systemCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'CPU %',
+                        data: [],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Memory %',
+                        data: [],
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        type: 'time',
+                        time: {
+                            displayFormats: {
+                                minute: 'HH:mm'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // User Activity Chart
+    const userCtx = document.getElementById('userActivityChart');
+    if (userCtx) {
+        userActivityChart = new Chart(userCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active Users', 'Inactive Users'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: [
+                        '#2563eb',
+                        '#e5e7eb'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+}
+
+// Update charts with new data
+window.updateDashboardCharts = function(metrics) {
+    if (systemPerformanceChart && metrics.system) {
+        const now = new Date();
+        const cpuData = systemPerformanceChart.data.datasets[0].data;
+        const memoryData = systemPerformanceChart.data.datasets[1].data;
+        
+        // Add new data point
+        cpuData.push({
+            x: now,
+            y: metrics.system.cpu_percent || 0
+        });
+        memoryData.push({
+            x: now,
+            y: metrics.system.memory_percent || 0
+        });
+        
+        // Keep only last 20 points
+        if (cpuData.length > 20) {
+            cpuData.shift();
+            memoryData.shift();
+        }
+        
+        systemPerformanceChart.update('none');
+    }
+    
+    if (userActivityChart && metrics.users) {
+        const activeUsers = metrics.users.active || 0;
+        const totalUsers = metrics.users.total || 0;
+        const inactiveUsers = totalUsers - activeUsers;
+        
+        userActivityChart.data.datasets[0].data = [activeUsers, inactiveUsers];
+        userActivityChart.update('none');
+    }
+};
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    
+    // Initialize charts with any existing data
+    const app = Alpine.raw(window.Alpine.store('app') || {});
+    if (app.metrics) {
+        window.updateDashboardCharts(app.metrics);
+    }
+});
+</script>
+{% endblock %}

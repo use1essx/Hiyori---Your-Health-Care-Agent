@@ -1,0 +1,829 @@
+<!-- Document Preview Modal Component -->
+<div id="document-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 90vw; max-height: 90vh;">
+        <div class="modal-header">
+            <h3 id="preview-title" class="text-xl font-semibold">Document Preview</h3>
+            <div class="flex items-center gap-2">
+                <button id="download-doc-btn" class="btn btn-sm" title="Download">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </button>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeDocumentPreview()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="modal-body" style="padding: 0; overflow: hidden;">
+            <div class="flex" style="height: 80vh;">
+                <!-- Document Info Sidebar -->
+                <div class="w-80 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+                    <div class="p-4">
+                        <h4 class="font-semibold text-gray-900 mb-3">Document Information</h4>
+                        
+                        <!-- Basic Info -->
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Filename</label>
+                                <p id="preview-filename" class="text-sm text-gray-900 font-medium"></p>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+                                <div id="preview-status-container"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Category</label>
+                                <p id="preview-category" class="text-sm text-gray-900"></p>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">File Size</label>
+                                <p id="preview-filesize" class="text-sm text-gray-900"></p>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quality Score</label>
+                                <div id="preview-quality-container"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Info -->
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <h5 class="font-medium text-gray-900 mb-3">Upload Details</h5>
+                            <div class="space-y-2">
+                                <div>
+                                    <label class="text-xs font-medium text-gray-500">Uploaded By</label>
+                                    <p id="preview-uploader" class="text-sm text-gray-900"></p>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-gray-500">Upload Date</label>
+                                    <p id="preview-upload-date" class="text-sm text-gray-900"></p>
+                                </div>
+                                <div id="preview-approval-info" style="display: none;">
+                                    <label class="text-xs font-medium text-gray-500">Approved By</label>
+                                    <p id="preview-approver" class="text-sm text-gray-900"></p>
+                                    <label class="text-xs font-medium text-gray-500 mt-1">Approval Date</label>
+                                    <p id="preview-approval-date" class="text-sm text-gray-900"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tags -->
+                        <div id="preview-tags-container" class="mt-6 pt-4 border-t border-gray-200" style="display: none;">
+                            <h5 class="font-medium text-gray-900 mb-3">Tags</h5>
+                            <div id="preview-tags" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div id="preview-description-container" class="mt-6 pt-4 border-t border-gray-200" style="display: none;">
+                            <h5 class="font-medium text-gray-900 mb-3">Description</h5>
+                            <p id="preview-description" class="text-sm text-gray-700"></p>
+                        </div>
+                        
+                        <!-- Processing Info -->
+                        <div id="preview-processing-container" class="mt-6 pt-4 border-t border-gray-200" style="display: none;">
+                            <h5 class="font-medium text-gray-900 mb-3">Processing Details</h5>
+                            <div class="space-y-2 text-sm">
+                                <div>
+                                    <label class="text-xs font-medium text-gray-500">Processing Time</label>
+                                    <p id="preview-processing-time" class="text-gray-700"></p>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-gray-500">Content Length</label>
+                                    <p id="preview-content-length" class="text-gray-700"></p>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-gray-500">Language</label>
+                                    <p id="preview-language" class="text-gray-700"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Document Content -->
+                <div class="flex-1 overflow-hidden flex flex-col">
+                    <!-- Content Tabs -->
+                    <div class="border-b border-gray-200 bg-white">
+                        <nav class="flex space-x-4 px-4">
+                            <button class="content-tab active py-3 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm" data-tab="preview">
+                                Preview
+                            </button>
+                            <button class="content-tab py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" data-tab="content">
+                                Extracted Content
+                            </button>
+                            <button class="content-tab py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" data-tab="metadata">
+                                Metadata
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Preview Tab -->
+                        <div id="tab-preview" class="tab-content p-4">
+                            <div class="flex items-center justify-center h-full">
+                                <div id="document-viewer" class="w-full h-full">
+                                    <div class="text-center text-gray-500">
+                                        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <p>Document preview will appear here</p>
+                                        <p class="text-sm mt-2">PDF and image files can be previewed</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Tab -->
+                        <div id="tab-content" class="tab-content p-4" style="display: none;">
+                            <div class="bg-gray-50 rounded-lg p-4 h-full overflow-y-auto">
+                                <h6 class="font-medium text-gray-900 mb-3">Extracted Text Content</h6>
+                                <div id="extracted-content" class="text-sm text-gray-700 whitespace-pre-wrap font-mono">
+                                    No content extracted yet...
+                                </div>
+                            </div>
+                            
+                            <!-- Content Summary -->
+                            <div id="content-summary-container" class="mt-4" style="display: none;">
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <h6 class="font-medium text-blue-900 mb-2">Content Summary</h6>
+                                    <p id="content-summary" class="text-sm text-blue-800"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Metadata Tab -->
+                        <div id="tab-metadata" class="tab-content p-4" style="display: none;">
+                            <div class="space-y-4">
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h6 class="font-medium text-gray-900 mb-3">File Metadata</h6>
+                                    <div id="file-metadata" class="grid grid-cols-2 gap-3 text-sm">
+                                        <!-- Metadata will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <div id="processing-metadata-container" class="bg-gray-50 rounded-lg p-4" style="display: none;">
+                                    <h6 class="font-medium text-gray-900 mb-3">Processing Metadata</h6>
+                                    <div id="processing-metadata" class="space-y-2 text-sm">
+                                        <!-- Processing metadata will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <div id="keywords-container" class="bg-gray-50 rounded-lg p-4" style="display: none;">
+                                    <h6 class="font-medium text-gray-900 mb-3">Extracted Keywords</h6>
+                                    <div id="extracted-keywords" class="flex flex-wrap gap-2">
+                                        <!-- Keywords will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <div class="flex items-center gap-2">
+                <!-- Action buttons based on document status -->
+                <div id="document-actions" class="flex gap-2">
+                    <!-- Actions will be populated based on document status -->
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button class="btn" onclick="closeDocumentPreview()">Close</button>
+                <button id="edit-document-btn" class="btn btn-primary" style="display: none;">Edit Document</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Preview Modal Styles */
+#document-preview-modal .modal {
+    width: 95vw;
+    height: 95vh;
+}
+
+.content-tab.active {
+    border-color: #3b82f6;
+    color: #2563eb;
+}
+
+.content-tab:hover:not(.active) {
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.tab-content {
+    height: calc(100% - 60px);
+}
+
+#document-viewer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 4px;
+}
+
+#extracted-content {
+    max-height: 400px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    items-center;
+    px: 2.5px;
+    py: 0.5px;
+    rounded-full;
+    text-xs;
+    font-medium;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background-color: #fecaca;
+    color: #991b1b;
+}
+
+.status-processing {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-error {
+    background-color: #fecaca;
+    color: #991b1b;
+}
+
+.quality-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.quality-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.quality-high {
+    background-color: #10b981;
+}
+
+.quality-medium {
+    background-color: #f59e0b;
+}
+
+.quality-low {
+    background-color: #ef4444;
+}
+
+.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    px: 2px;
+    py: 1px;
+    background-color: #f3f4f6;
+    color: #374151;
+    rounded-full;
+    text-xs;
+    font-medium;
+}
+
+.keyword-tag {
+    display: inline-flex;
+    align-items: center;
+    px: 2px;
+    py: 1px;
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #dbeafe;
+    rounded-full;
+    text-xs;
+    font-medium;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    #document-preview-modal .modal {
+        width: 98vw;
+        height: 98vh;
+    }
+    
+    #document-preview-modal .flex {
+        flex-direction: column;
+    }
+    
+    #document-preview-modal .w-80 {
+        width: 100%;
+        max-height: 300px;
+    }
+}
+</style>
+
+<script>
+// Document Preview Modal Management
+class DocumentPreviewModal {
+    constructor() {
+        this.currentDocument = null;
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.content-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                this.switchTab(e.target.dataset.tab);
+            });
+        });
+        
+        // Download button
+        document.getElementById('download-doc-btn').addEventListener('click', () => {
+            if (this.currentDocument) {
+                this.downloadDocument(this.currentDocument.id);
+            }
+        });
+        
+        // Edit button
+        document.getElementById('edit-document-btn').addEventListener('click', () => {
+            if (this.currentDocument) {
+                this.editDocument(this.currentDocument.id);
+            }
+        });
+    }
+    
+    async open(documentId) {
+        try {
+            // Load document details
+            const response = await fetch(`/api/v1/uploads/documents/${documentId}`, {
+                headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load document details');
+            }
+            
+            const document = await response.json();
+            this.currentDocument = document;
+            
+            // Populate document information
+            this.populateDocumentInfo(document);
+            
+            // Show modal
+            document.getElementById('document-preview-modal').style.display = 'flex';
+            
+            // Load preview content
+            this.loadPreviewContent(document);
+            
+        } catch (error) {
+            console.error('Error opening document preview:', error);
+            this.showError('Failed to load document: ' + error.message);
+        }
+    }
+    
+    close() {
+        document.getElementById('document-preview-modal').style.display = 'none';
+        this.currentDocument = null;
+        this.clearContent();
+    }
+    
+    populateDocumentInfo(doc) {
+        // Basic info
+        document.getElementById('preview-title').textContent = doc.title || doc.original_filename;
+        document.getElementById('preview-filename').textContent = doc.original_filename;
+        document.getElementById('preview-category').textContent = doc.category || 'Uncategorized';
+        document.getElementById('preview-filesize').textContent = this.formatFileSize(doc.file_size);
+        
+        // Status
+        this.updateStatus(doc.status);
+        
+        // Quality score
+        this.updateQualityScore(doc.quality_score);
+        
+        // Upload info
+        document.getElementById('preview-uploader').textContent = 
+            doc.uploaded_by?.full_name || doc.uploaded_by?.username || 'Unknown';
+        document.getElementById('preview-upload-date').textContent = 
+            this.formatDate(doc.created_at);
+        
+        // Approval info
+        if (doc.approved_by && doc.approved_at) {
+            document.getElementById('preview-approval-info').style.display = 'block';
+            document.getElementById('preview-approver').textContent = 
+                doc.approved_by.full_name || doc.approved_by.username;
+            document.getElementById('preview-approval-date').textContent = 
+                this.formatDate(doc.approved_at);
+        } else {
+            document.getElementById('preview-approval-info').style.display = 'none';
+        }
+        
+        // Tags
+        if (doc.keywords?.tags && doc.keywords.tags.length > 0) {
+            document.getElementById('preview-tags-container').style.display = 'block';
+            const tagsContainer = document.getElementById('preview-tags');
+            tagsContainer.innerHTML = doc.keywords.tags.map(tag => 
+                `<span class="tag-pill">${tag}</span>`
+            ).join('');
+        } else {
+            document.getElementById('preview-tags-container').style.display = 'none';
+        }
+        
+        // Description
+        if (doc.description) {
+            document.getElementById('preview-description-container').style.display = 'block';
+            document.getElementById('preview-description').textContent = doc.description;
+        } else {
+            document.getElementById('preview-description-container').style.display = 'none';
+        }
+        
+        // Processing info
+        if (doc.metadata) {
+            document.getElementById('preview-processing-container').style.display = 'block';
+            document.getElementById('preview-processing-time').textContent = 
+                doc.metadata.processing_time_ms ? `${doc.metadata.processing_time_ms}ms` : 'N/A';
+            document.getElementById('preview-content-length').textContent = 
+                doc.extracted_content ? `${doc.extracted_content.length} characters` : 'N/A';
+            document.getElementById('preview-language').textContent = 
+                doc.metadata.language || 'Not detected';
+        }
+        
+        // Document actions
+        this.updateDocumentActions(doc);
+        
+        // Populate content tabs
+        this.populateContentTabs(doc);
+    }
+    
+    updateStatus(status) {
+        const container = document.getElementById('preview-status-container');
+        const statusMap = {
+            'pending_approval': { text: 'Pending Approval', class: 'status-pending' },
+            'approved': { text: 'Approved', class: 'status-approved' },
+            'rejected': { text: 'Rejected', class: 'status-rejected' },
+            'processing': { text: 'Processing', class: 'status-processing' },
+            'processing_error': { text: 'Error', class: 'status-error' }
+        };
+        
+        const statusInfo = statusMap[status] || { text: status, class: 'status-pending' };
+        container.innerHTML = `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+    }
+    
+    updateQualityScore(score) {
+        const container = document.getElementById('preview-quality-container');
+        
+        if (score !== null && score !== undefined) {
+            const percentage = Math.round(score * 100);
+            const qualityClass = score >= 0.8 ? 'quality-high' : 
+                               score >= 0.6 ? 'quality-medium' : 'quality-low';
+            
+            container.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium">${percentage}%</span>
+                    <div class="quality-bar flex-1">
+                        <div class="quality-fill ${qualityClass}" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<span class="text-sm text-gray-500">Not calculated</span>';
+        }
+    }
+    
+    updateDocumentActions(doc) {
+        const actionsContainer = document.getElementById('document-actions');
+        const actions = [];
+        
+        if (doc.status === 'pending_approval') {
+            actions.push(`
+                <button class="btn btn-success btn-sm" onclick="documentPreviewModal.approveDocument(${doc.id})">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Approve
+                </button>
+            `);
+            
+            actions.push(`
+                <button class="btn btn-danger btn-sm" onclick="documentPreviewModal.rejectDocument(${doc.id})">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject
+                </button>
+            `);
+        }
+        
+        actionsContainer.innerHTML = actions.join('');
+    }
+    
+    populateContentTabs(doc) {
+        // Extracted content
+        const extractedContent = document.getElementById('extracted-content');
+        if (doc.extracted_content) {
+            extractedContent.textContent = doc.extracted_content;
+        } else {
+            extractedContent.textContent = 'No content extracted yet...';
+        }
+        
+        // Content summary
+        if (doc.content_summary) {
+            document.getElementById('content-summary-container').style.display = 'block';
+            document.getElementById('content-summary').textContent = doc.content_summary;
+        } else {
+            document.getElementById('content-summary-container').style.display = 'none';
+        }
+        
+        // File metadata
+        this.populateMetadata(doc);
+    }
+    
+    populateMetadata(doc) {
+        const fileMetadata = document.getElementById('file-metadata');
+        const metadata = [
+            { label: 'File Type', value: doc.file_type?.toUpperCase() || 'Unknown' },
+            { label: 'File Size', value: this.formatFileSize(doc.file_size) },
+            { label: 'Upload Date', value: this.formatDate(doc.created_at) },
+            { label: 'Last Modified', value: this.formatDate(doc.updated_at) }
+        ];
+        
+        fileMetadata.innerHTML = metadata.map(item => `
+            <div>
+                <label class="text-xs font-medium text-gray-500">${item.label}</label>
+                <p class="text-gray-900">${item.value}</p>
+            </div>
+        `).join('');
+        
+        // Processing metadata
+        if (doc.metadata && Object.keys(doc.metadata).length > 0) {
+            document.getElementById('processing-metadata-container').style.display = 'block';
+            const processingMetadata = document.getElementById('processing-metadata');
+            
+            const metadataItems = Object.entries(doc.metadata)
+                .filter(([key, value]) => value !== null && value !== undefined)
+                .map(([key, value]) => `
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">${this.formatKey(key)}:</span>
+                        <span class="text-gray-900">${this.formatValue(value)}</span>
+                    </div>
+                `);
+            
+            processingMetadata.innerHTML = metadataItems.join('');
+        }
+        
+        // Keywords
+        if (doc.keywords && Object.keys(doc.keywords).length > 0) {
+            document.getElementById('keywords-container').style.display = 'block';
+            const keywordsContainer = document.getElementById('extracted-keywords');
+            
+            const allKeywords = [];
+            Object.entries(doc.keywords).forEach(([category, keywords]) => {
+                if (Array.isArray(keywords)) {
+                    keywords.forEach(keyword => {
+                        allKeywords.push(`<span class="keyword-tag">${keyword}</span>`);
+                    });
+                }
+            });
+            
+            keywordsContainer.innerHTML = allKeywords.join('');
+        }
+    }
+    
+    loadPreviewContent(doc) {
+        const viewer = document.getElementById('document-viewer');
+        
+        if (doc.file_type === 'pdf') {
+            // Load PDF preview
+            viewer.innerHTML = `
+                <iframe src="/api/v1/uploads/preview/${doc.id}" 
+                        title="Document Preview" 
+                        style="width: 100%; height: 100%; border: none;">
+                    <p>Your browser does not support PDF preview. 
+                       <a href="/api/v1/uploads/download/${doc.id}">Download the file</a> instead.</p>
+                </iframe>
+            `;
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(doc.file_type.toLowerCase())) {
+            // Load image preview
+            viewer.innerHTML = `
+                <img src="/api/v1/uploads/preview/${doc.id}" 
+                     alt="Document Preview" 
+                     style="max-width: 100%; max-height: 100%; object-fit: contain; margin: 0 auto; display: block;">
+            `;
+        } else {
+            // Show placeholder for other file types
+            viewer.innerHTML = `
+                <div class="text-center text-gray-500 flex flex-col items-center justify-center h-full">
+                    <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p>Preview not available for ${doc.file_type.toUpperCase()} files</p>
+                    <p class="text-sm mt-2">View the extracted content in the "Extracted Content" tab</p>
+                </div>
+            `;
+        }
+    }
+    
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.content-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.getElementById(`tab-${tabName}`).style.display = 'block';
+    }
+    
+    clearContent() {
+        // Clear all dynamic content
+        document.getElementById('document-viewer').innerHTML = '';
+        document.getElementById('extracted-content').textContent = 'No content extracted yet...';
+        document.getElementById('document-actions').innerHTML = '';
+        
+        // Switch back to preview tab
+        this.switchTab('preview');
+    }
+    
+    async approveDocument(docId) {
+        if (!confirm('Are you sure you want to approve this document?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/v1/uploads/documents/${docId}/approve`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.getAuthToken()}` }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to approve document');
+            }
+            
+            this.showSuccess('Document approved successfully');
+            
+            // Refresh document data
+            setTimeout(() => {
+                this.open(docId);
+                if (window.documentManager) {
+                    window.documentManager.loadDocuments();
+                }
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Approval error:', error);
+            this.showError('Failed to approve document: ' + error.message);
+        }
+    }
+    
+    async rejectDocument(docId) {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (!reason) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append('reason', reason);
+            
+            const response = await fetch(`/api/v1/uploads/documents/${docId}/reject`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.getAuthToken()}` },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to reject document');
+            }
+            
+            this.showSuccess('Document rejected successfully');
+            
+            // Refresh document data
+            setTimeout(() => {
+                this.open(docId);
+                if (window.documentManager) {
+                    window.documentManager.loadDocuments();
+                }
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Rejection error:', error);
+            this.showError('Failed to reject document: ' + error.message);
+        }
+    }
+    
+    downloadDocument(docId) {
+        const downloadUrl = `/api/v1/uploads/download/${docId}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    editDocument(docId) {
+        // This would open the edit modal or navigate to edit page
+        console.log('Edit document:', docId);
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } catch {
+            return 'Invalid Date';
+        }
+    }
+    
+    formatKey(key) {
+        return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
+    formatValue(value) {
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value);
+        }
+        return String(value);
+    }
+    
+    getAuthToken() {
+        return localStorage.getItem('auth_token') || '';
+    }
+    
+    showError(message) {
+        const event = new CustomEvent('showNotification', {
+            detail: { message, type: 'error' }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    showSuccess(message) {
+        const event = new CustomEvent('showNotification', {
+            detail: { message, type: 'success' }
+        });
+        document.dispatchEvent(event);
+    }
+}
+
+// Global instance
+let documentPreviewModal;
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    documentPreviewModal = new DocumentPreviewModal();
+});
+
+// Global functions
+function openDocumentPreview(documentId) {
+    documentPreviewModal.open(documentId);
+}
+
+function closeDocumentPreview() {
+    documentPreviewModal.close();
+}
+
+// Integrate with document manager
+if (window.documentManager) {
+    window.documentManager.openDocumentModal = function(docId, mode) {
+        if (mode === 'view') {
+            openDocumentPreview(docId);
+        } else {
+            // Handle edit mode
+            console.log('Edit mode not implemented yet');
+        }
+    };
+}
+</script>

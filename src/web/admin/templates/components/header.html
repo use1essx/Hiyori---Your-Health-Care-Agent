@@ -1,0 +1,200 @@
+<!-- Header Component -->
+<div class="flex-1 px-4 flex justify-between items-center">
+    <!-- Mobile menu button -->
+    <button @click="sidebarOpen = !sidebarOpen"
+            class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-healthcare-blue md:hidden">
+        <i class="fas fa-bars h-6 w-6"></i>
+    </button>
+
+    <!-- Page title and breadcrumb -->
+    <div class="flex-1 flex items-center">
+        <div class="ml-4 md:ml-0">
+            <div class="flex items-center space-x-2">
+                <h1 class="text-lg font-semibold text-gray-900">
+                    {% block page_title %}Dashboard{% endblock %}
+                </h1>
+                {% block breadcrumb %}
+                <nav class="hidden md:flex text-sm text-gray-500" aria-label="Breadcrumb">
+                    <ol class="flex items-center space-x-2">
+                        <li><a href="/admin/" class="hover:text-gray-700">Admin</a></li>
+                        <li><i class="fas fa-chevron-right text-xs"></i></li>
+                        <li class="text-gray-900">Dashboard</li>
+                    </ol>
+                </nav>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Header actions -->
+    <div class="flex items-center space-x-4">
+        <!-- Real-time indicator -->
+        <div class="hidden md:flex items-center space-x-2 text-sm">
+            <div class="flex items-center space-x-1">
+                <div class="w-2 h-2 rounded-full"
+                     :class="isConnected ? 'bg-green-400 pulse-green' : 'bg-red-400'"></div>
+                <span class="text-gray-600" x-text="isConnected ? 'Live' : 'Offline'"></span>
+            </div>
+            <span class="text-gray-400">|</span>
+            <span class="text-gray-500" x-text="lastUpdate ? 'Updated ' + timeAgo(lastUpdate) : 'No data'"></span>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="flex items-center space-x-2">
+            <!-- Refresh button -->
+            <button @click="refreshMetrics()"
+                    class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-healthcare-blue"
+                    title="Refresh data">
+                <i class="fas fa-sync-alt h-4 w-4" :class="{ 'animate-spin': loading }"></i>
+            </button>
+
+            <!-- Notifications -->
+            <div class="relative" x-data="{ notificationDropdown: false }">
+                <button @click="notificationDropdown = !notificationDropdown"
+                        class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-healthcare-blue relative">
+                    <i class="fas fa-bell h-5 w-5"></i>
+                    <!-- Notification badge -->
+                    <span x-show="(metrics.security?.alerts_today || 0) > 0" 
+                          class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                        <span x-text="metrics.security?.alerts_today || 0"></span>
+                    </span>
+                </button>
+
+                <!-- Notification dropdown -->
+                <div x-show="notificationDropdown"
+                     @click.outside="notificationDropdown = false"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="transform opacity-0 scale-95"
+                     x-transition:enter-end="transform opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="transform opacity-100 scale-100"
+                     x-transition:leave-end="transform opacity-0 scale-95"
+                     class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-gray-900">System Alerts</h3>
+                            <button class="text-xs text-healthcare-blue hover:text-healthcare-blue/80">
+                                Mark all read
+                            </button>
+                        </div>
+                        
+                        <!-- Sample notifications -->
+                        <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                            <template x-if="(metrics.security?.alerts_today || 0) > 0">
+                                <div class="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
+                                    <i class="fas fa-exclamation-triangle text-red-400 mt-0.5"></i>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900">Security Alerts</p>
+                                        <p class="text-sm text-gray-500" 
+                                           x-text="`${metrics.security?.alerts_today || 0} security events detected today`"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <template x-if="(metrics.pipeline?.error_rate || 0) > 0.05">
+                                <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
+                                    <i class="fas fa-exclamation-circle text-yellow-400 mt-0.5"></i>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900">Data Pipeline Warning</p>
+                                        <p class="text-sm text-gray-500">
+                                            Higher than normal error rate detected
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <template x-if="!isConnected">
+                                <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-wifi text-gray-400 mt-0.5"></i>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900">Connection Lost</p>
+                                        <p class="text-sm text-gray-500">Real-time updates unavailable</p>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- No notifications -->
+                            <template x-if="isConnected && (metrics.security?.alerts_today || 0) === 0 && (metrics.pipeline?.error_rate || 0) <= 0.05">
+                                <div class="text-center py-6">
+                                    <i class="fas fa-check-circle text-green-400 text-2xl mb-2"></i>
+                                    <p class="text-sm text-gray-500">All systems running smoothly</p>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <a href="/admin/security" 
+                               class="block text-sm text-healthcare-blue hover:text-healthcare-blue/80 text-center">
+                                View all security events →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <button class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-healthcare-blue"
+                    title="Settings">
+                <i class="fas fa-cog h-5 w-5"></i>
+            </button>
+        </div>
+
+        <!-- User menu -->
+        <div class="relative ml-3" x-data="{ userMenuOpen: false }">
+            <button @click="userMenuOpen = !userMenuOpen"
+                    class="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-healthcare-blue">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-healthcare-blue rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">
+                            {{ user.full_name[0] if user.full_name else user.email[0] }}
+                        </span>
+                    </div>
+                    <div class="hidden md:block text-left">
+                        <p class="text-sm font-medium text-gray-900">
+                            {{ user.full_name or user.username }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ user.role.title() }}</p>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                </div>
+            </button>
+
+            <!-- User dropdown -->
+            <div x-show="userMenuOpen"
+                 @click.outside="userMenuOpen = false"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50">
+                
+                <div class="px-4 py-3 border-b border-gray-100">
+                    <p class="text-sm font-medium text-gray-900">{{ user.full_name or user.username }}</p>
+                    <p class="text-sm text-gray-500">{{ user.email }}</p>
+                </div>
+                
+                <a href="/admin/profile" 
+                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-user mr-3 h-4 w-4"></i>
+                    Profile Settings
+                </a>
+                
+                <a href="/admin/preferences" 
+                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-cog mr-3 h-4 w-4"></i>
+                    Preferences
+                </a>
+                
+                <div class="border-t border-gray-100"></div>
+                
+                <a href="/api/v1/auth/logout" 
+                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-sign-out-alt mr-3 h-4 w-4"></i>
+                    Sign out
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
