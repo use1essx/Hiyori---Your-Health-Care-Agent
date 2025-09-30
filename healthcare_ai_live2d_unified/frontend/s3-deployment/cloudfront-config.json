@@ -1,0 +1,139 @@
+{
+  "CallerReference": "healthcare-ai-frontend-2024",
+  "Comment": "CloudFront distribution for Healthcare AI Live2D Frontend",
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "S3-healthcare-ai-frontend",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "MinTTL": 0,
+    "ForwardedValues": {
+      "QueryString": false,
+      "Cookies": {
+        "Forward": "none"
+      },
+      "Headers": {
+        "Quantity": 3,
+        "Items": [
+          "Origin",
+          "Access-Control-Request-Method",
+          "Access-Control-Request-Headers"
+        ]
+      }
+    },
+    "TrustedSigners": {
+      "Enabled": false,
+      "Quantity": 0
+    },
+    "Compress": true,
+    "DefaultTTL": 86400,
+    "MaxTTL": 31536000
+  },
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "S3-healthcare-ai-frontend",
+        "DomainName": "{{S3_BUCKET_DOMAIN}}",
+        "S3OriginConfig": {
+          "OriginAccessIdentity": ""
+        }
+      }
+    ]
+  },
+  "CacheBehaviors": {
+    "Quantity": 4,
+    "Items": [
+      {
+        "PathPattern": "*.html",
+        "TargetOriginId": "S3-healthcare-ai-frontend",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "MinTTL": 0,
+        "DefaultTTL": 300,
+        "MaxTTL": 300,
+        "ForwardedValues": {
+          "QueryString": false,
+          "Cookies": {
+            "Forward": "none"
+          }
+        },
+        "Compress": true
+      },
+      {
+        "PathPattern": "*.js",
+        "TargetOriginId": "S3-healthcare-ai-frontend",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "MinTTL": 0,
+        "DefaultTTL": 31536000,
+        "MaxTTL": 31536000,
+        "ForwardedValues": {
+          "QueryString": false,
+          "Cookies": {
+            "Forward": "none"
+          }
+        },
+        "Compress": true
+      },
+      {
+        "PathPattern": "*.css",
+        "TargetOriginId": "S3-healthcare-ai-frontend",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "MinTTL": 0,
+        "DefaultTTL": 31536000,
+        "MaxTTL": 31536000,
+        "ForwardedValues": {
+          "QueryString": false,
+          "Cookies": {
+            "Forward": "none"
+          }
+        },
+        "Compress": true
+      },
+      {
+        "PathPattern": "/live2d/*",
+        "TargetOriginId": "S3-healthcare-ai-frontend",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "MinTTL": 0,
+        "DefaultTTL": 31536000,
+        "MaxTTL": 31536000,
+        "ForwardedValues": {
+          "QueryString": false,
+          "Cookies": {
+            "Forward": "none"
+          }
+        },
+        "Compress": false
+      }
+    ]
+  },
+  "CustomErrorResponses": {
+    "Quantity": 2,
+    "Items": [
+      {
+        "ErrorCode": 404,
+        "ResponsePagePath": "/index.html",
+        "ResponseCode": "200",
+        "ErrorCachingMinTTL": 300
+      },
+      {
+        "ErrorCode": 403,
+        "ResponsePagePath": "/index.html",
+        "ResponseCode": "200",
+        "ErrorCachingMinTTL": 300
+      }
+    ]
+  },
+  "Enabled": true,
+  "PriceClass": "PriceClass_100",
+  "ViewerCertificate": {
+    "CloudFrontDefaultCertificate": true
+  },
+  "WebACLId": "",
+  "HttpVersion": "http2",
+  "IsIPV6Enabled": true,
+  "DefaultRootObject": "index.html",
+  "Logging": {
+    "Enabled": true,
+    "IncludeCookies": false,
+    "Bucket": "{{LOGGING_BUCKET}}.s3.amazonaws.com",
+    "Prefix": "cloudfront-logs/"
+  }
+}

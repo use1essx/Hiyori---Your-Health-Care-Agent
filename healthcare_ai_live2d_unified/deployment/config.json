@@ -1,0 +1,65 @@
+{
+  "development": {
+    "stack_name": "healthcare-ai-dev",
+    "template_path": "infrastructure/cloudformation-template.yaml",
+    "aws_region": "us-east-1",
+    "parameters": {
+      "Environment": "dev",
+      "ProjectName": "HealthcareAI",
+      "EnableDetailedMonitoring": "false",
+      "EnableXRayTracing": "false",
+      "LambdaMemorySize": "512",
+      "DynamoDBBillingMode": "PAY_PER_REQUEST",
+      "S3BucketPrefix": "healthcare-ai-dev",
+      "ApiGatewayStageName": "dev",
+      "CloudFrontPriceClass": "PriceClass_100",
+      "EnableBackup": "false",
+      "LogRetentionDays": "7"
+    },
+    "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"],
+    "timeout_minutes": 45,
+    "enable_rollback": true
+  },
+  "staging": {
+    "stack_name": "healthcare-ai-staging",
+    "template_path": "infrastructure/cloudformation-template.yaml",
+    "aws_region": "us-east-1",
+    "parameters": {
+      "Environment": "staging",
+      "ProjectName": "HealthcareAI",
+      "EnableDetailedMonitoring": "true",
+      "EnableXRayTracing": "true",
+      "LambdaMemorySize": "1024",
+      "DynamoDBBillingMode": "PAY_PER_REQUEST",
+      "S3BucketPrefix": "healthcare-ai-staging",
+      "ApiGatewayStageName": "staging",
+      "CloudFrontPriceClass": "PriceClass_100",
+      "EnableBackup": "true",
+      "LogRetentionDays": "30"
+    },
+    "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"],
+    "timeout_minutes": 60,
+    "enable_rollback": true
+  },
+  "production": {
+    "stack_name": "healthcare-ai-prod",
+    "template_path": "infrastructure/cloudformation-template.yaml",
+    "aws_region": "us-east-1",
+    "parameters": {
+      "Environment": "prod",
+      "ProjectName": "HealthcareAI",
+      "EnableDetailedMonitoring": "true",
+      "EnableXRayTracing": "true",
+      "LambdaMemorySize": "2048",
+      "DynamoDBBillingMode": "PAY_PER_REQUEST",
+      "S3BucketPrefix": "healthcare-ai-prod",
+      "ApiGatewayStageName": "prod",
+      "CloudFrontPriceClass": "PriceClass_All",
+      "EnableBackup": "true",
+      "LogRetentionDays": "90"
+    },
+    "capabilities": ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"],
+    "timeout_minutes": 90,
+    "enable_rollback": true
+  }
+}

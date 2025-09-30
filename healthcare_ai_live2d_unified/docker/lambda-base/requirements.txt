@@ -1,0 +1,6 @@
+# Base requirements for all healthcare AI Lambda functions
+boto3>=1.34.0
+botocore>=1.34.0
+requests>=2.31.0
+python-dateutil>=2.8.2
+urllib3>=1.26.18

@@ -1,0 +1,968 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Cost-Optimized Healthcare AI Live2D System - Serverless AWS Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev', 'staging', 'prod']
+    Description: 'Environment name for resource naming'
+  
+  CostAlertEmail:
+    Type: String
+    Description: 'Email address for cost alerts'
+    Default: 'admin@example.com'
+  
+  CostThreshold:
+    Type: Number
+    Default: 20
+    Description: 'Monthly cost threshold in USD for alerts'
+
+Resources:
+  # ============================================================================
+  # LAMBDA OPTIMIZATION LAYER
+  # ============================================================================
+  
+  # Lambda Layer for Optimization System
+  OptimizationLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub '${Environment}-healthcare-ai-optimization-layer'
+      Description: 'Lambda optimization system with connection pooling and cold start reduction'
+      Content:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: 'layers/healthcare-ai-optimization-layer.zip'
+      CompatibleRuntimes:
+        - python3.9
+        - python3.10
+        - python3.11
+      CompatibleArchitectures:
+        - x86_64
+        - arm64
+      LicenseInfo: 'MIT'
+
+  # ============================================================================
+  # S3 BUCKETS FOR STATIC HOSTING AND DATA STORAGE
+  # ============================================================================
+  
+  # S3 Bucket for Live2D Frontend Static Website
+  Live2DWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-healthcare-live2d-${AWS::AccountId}'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, HEAD]
+            AllowedOrigins: ['*']
+            MaxAge: 3600
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+
+  # S3 Bucket Policy for Website Access
+  Live2DWebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Live2DWebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub '${Live2DWebsiteBucket}/*'
+
+  # S3 Bucket for Data Storage (uploads, temp files, etc.)
+  DataStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-healthcare-data-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteTempFiles
+            Status: Enabled
+            Filter:
+              Prefix: 'temp-audio/'
+            ExpirationInDays: 1
+          - Id: ArchiveOldUploads
+            Status: Enabled
+            Filter:
+              Prefix: 'uploads/'
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: s3:ObjectCreated:*
+            CloudWatchConfiguration:
+              LogGroupName: !Ref S3AccessLogGroup
+
+  # ============================================================================
+  # CLOUDFRONT DISTRIBUTION FOR GLOBAL CDN
+  # ============================================================================
+  
+  Live2DDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt Live2DWebsiteBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # Managed-CachingOptimized
+          Compress: true
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+        CacheBehaviors:
+          - PathPattern: '/assets/*'
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimizedForUncompressedObjects
+            Compress: false
+        Enabled: true
+        DefaultRootObject: index.html
+        Comment: !Sub 'Healthcare Live2D CDN - ${Environment}'
+        PriceClass: PriceClass_100  # Use only North America and Europe for cost optimization
+
+  # ============================================================================
+  # DYNAMODB TABLES WITH ON-DEMAND BILLING
+  # ============================================================================
+  
+  # Conversations Table
+  ConversationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-healthcare-conversations'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: conversation_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: conversation_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: UserIndex
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # User Profiles Table
+  UserProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-healthcare-users'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # Hong Kong Healthcare Data Cache Table
+  HongKongDataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-hongkong-healthcare-data'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: data_type
+          AttributeType: S
+        - AttributeName: region
+          AttributeType: S
+      KeySchema:
+        - AttributeName: data_type
+          KeyType: HASH
+        - AttributeName: region
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  # ============================================================================
+  # IAM ROLES FOR LAMBDA FUNCTIONS
+  # ============================================================================
+  
+  # Base Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-healthcare-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt ConversationsTable.Arn
+                  - !Sub '${ConversationsTable.Arn}/index/*'
+                  - !GetAtt UserProfilesTable.Arn
+                  - !GetAtt HongKongDataTable.Arn
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: '*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub '${DataStorageBucket}/*'
+        - PolicyName: TranscribePollyAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                  - polly:SynthesizeSpeech
+                Resource: '*'
+        - PolicyName: LambdaInvokeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}-healthcare-*'
+        - PolicyName: ParameterStoreAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Environment}/healthcare/*'
+
+  # ============================================================================
+  # LAMBDA OPTIMIZATION INFRASTRUCTURE
+  # ============================================================================
+  
+  # Dead Letter Queue for failed Lambda invocations
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${Environment}-healthcare-dlq'
+      MessageRetentionPeriod: 1209600  # 14 days
+      VisibilityTimeoutSeconds: 60
+      
+  # EventBridge rule for Lambda warming
+  LambdaWarmingRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${Environment}-lambda-warming'
+      Description: 'Scheduled Lambda warming to reduce cold starts'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt AgentRouterFunction.Arn
+          Id: 'WarmAgentRouter'
+          Input: !Sub |
+            {
+              "warming": true,
+              "source": "eventbridge",
+              "timestamp": "${AWS::StackName}"
+            }
+
+  # Lambda permission for EventBridge warming
+  LambdaWarmingPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AgentRouterFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt LambdaWarmingRule.Arn
+
+  # ============================================================================
+  # LAMBDA FUNCTIONS FOR HEALTHCARE AGENTS
+  # ============================================================================
+  
+  # Agent Router Lambda Function
+  AgentRouterFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-agent-router'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          # This is a placeholder - actual code should be deployed via deployment package
+          # See healthcare_ai_live2d_unified/src/lambda/agent_router/ for implementation
+          import json
+          import boto3
+          import os
+          import logging
+          import re
+          from typing import Dict, Any, Optional, List, Tuple
+          from datetime import datetime
+          import uuid
+          
+          # Configure logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          def handler(event, context):
+              """Placeholder handler - replace with actual implementation"""
+              try:
+                  # Parse request
+                  if 'body' in event:
+                      body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+                  else:
+                      body = event
+                  
+                  message = body.get('message', '')
+                  user_id = body.get('user_id', 'anonymous')
+                  conversation_id = body.get('conversation_id', str(uuid.uuid4()))
+                  
+                  if not message:
+                      return {
+                          'statusCode': 400,
+                          'headers': {'Access-Control-Allow-Origin': '*'},
+                          'body': json.dumps({'error': 'Message is required'})
+                      }
+                  
+                  # Simple agent selection for placeholder
+                  message_lower = message.lower()
+                  if any(word in message_lower for word in ['emergency', 'urgent', 'help', '緊急']):
+                      agent = 'safety_guardian'
+                  elif any(word in message_lower for word in ['pain', 'sick', 'headache', '痛', '病']):
+                      agent = 'illness_monitor'
+                  elif any(word in message_lower for word in ['stress', 'anxiety', 'sad', '壓力', '焦慮']):
+                      agent = 'mental_health'
+                  else:
+                      agent = 'wellness_coach'
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({
+                          'response': f'Agent Router - Routing to {agent} (placeholder implementation)',
+                          'agent': agent,
+                          'avatar': 'Router',
+                          'conversation_id': conversation_id,
+                          'routing_info': {
+                              'confidence': 0.8,
+                              'reasons': ['Placeholder routing logic'],
+                              'emergency_override': False
+                          }
+                      })
+                  }
+              except Exception as e:
+                  logger.error(f"Router error: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'error': 'Internal server error'})
+                  }
+      Layers:
+        - !Ref OptimizationLayer
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+          USERS_TABLE: !Ref UserProfilesTable
+          DATA_BUCKET: !Ref DataStorageBucket
+          OPTIMIZATION_ENABLED: 'true'
+          CONNECTION_POOL_SIZE: '8'
+          LAZY_LOADING_ENABLED: 'true'
+          LAMBDA_WARMING_ENABLED: 'true'
+      Timeout: 30
+      MemorySize: 512
+      ReservedConcurrencyLimit: 20
+      DeadLetterQueue:
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+      TracingConfig:
+        Mode: Active
+
+  # Illness Monitor Lambda Function (Optimized)
+  IllnessMonitorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-illness-monitor'
+      Runtime: python3.11
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: 'functions/healthcare-illness-monitor.zip'
+      Layers:
+        - !Ref OptimizationLayer
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+          USERS_TABLE: !Ref UserProfilesTable
+          HONGKONG_DATA_TABLE: !Ref HongKongDataTable
+          OPTIMIZATION_ENABLED: 'true'
+          CONNECTION_POOL_SIZE: '6'
+          LAZY_LOADING_ENABLED: 'true'
+      Timeout: 60
+      MemorySize: 1024
+      ReservedConcurrencyLimit: 10
+      DeadLetterQueue:
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+      TracingConfig:
+        Mode: Active
+
+  # Mental Health Support Lambda Function
+  MentalHealthFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-mental-health'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'response': 'Mental Health Agent - Placeholder Implementation',
+                      'agent': 'mental_health',
+                      'avatar': 'Xiaoxing'
+                  })
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+          USERS_TABLE: !Ref UserProfilesTable
+      Timeout: 30
+      MemorySize: 512
+      ReservedConcurrencyLimit: 5
+
+  # Safety Guardian Lambda Function
+  SafetyGuardianFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-safety-guardian'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'response': 'Safety Guardian Agent - Placeholder Implementation',
+                      'agent': 'safety_guardian',
+                      'avatar': 'Guardian'
+                  })
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+          USERS_TABLE: !Ref UserProfilesTable
+          HONGKONG_DATA_TABLE: !Ref HongKongDataTable
+      Timeout: 30
+      MemorySize: 512
+      ReservedConcurrencyLimit: 5
+
+  # Wellness Coach Lambda Function
+  WellnessCoachFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-wellness-coach'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'response': 'Wellness Coach Agent - Placeholder Implementation',
+                      'agent': 'wellness_coach',
+                      'avatar': 'Coach'
+                  })
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+          USERS_TABLE: !Ref UserProfilesTable
+      Timeout: 30
+      MemorySize: 512
+      ReservedConcurrencyLimit: 5
+
+  # Speech Processing Lambda Function
+  SpeechProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-speech-processor'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'Speech Processor - Placeholder Implementation'})
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          DATA_BUCKET: !Ref DataStorageBucket
+      Timeout: 60
+      MemorySize: 1024
+      ReservedConcurrencyLimit: 3
+
+  # File Processing Lambda Function
+  FileProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-healthcare-file-processor'
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'File Processor - Placeholder Implementation'})
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          DATA_BUCKET: !Ref DataStorageBucket
+          CONVERSATIONS_TABLE: !Ref ConversationsTable
+      Timeout: 300
+      MemorySize: 1024
+      ReservedConcurrencyLimit: 2
+
+  # ============================================================================
+  # API GATEWAY FOR REST API
+  # ============================================================================
+  
+  HealthcareAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${Environment}-healthcare-api'
+      Description: 'Healthcare AI System REST API'
+      EndpointConfiguration:
+        Types: [REGIONAL]
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: execute-api:Invoke
+            Resource: '*'
+
+  # API Gateway Resources and Methods
+  ChatResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ParentId: !GetAtt HealthcareAPI.RootResourceId
+      PathPart: chat
+
+  ChatMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ResourceId: !Ref ChatResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AgentRouterFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: true
+
+  # CORS Options Method
+  ChatOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ResourceId: !Ref ChatResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # Speech Resource
+  SpeechResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ParentId: !GetAtt HealthcareAPI.RootResourceId
+      PathPart: speech
+
+  SpeechMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ResourceId: !Ref SpeechResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SpeechProcessorFunction.Arn}/invocations'
+
+  # Upload Resource
+  UploadResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ParentId: !GetAtt HealthcareAPI.RootResourceId
+      PathPart: upload
+
+  UploadMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      ResourceId: !Ref UploadResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FileProcessorFunction.Arn}/invocations'
+
+  # API Gateway Deployment
+  APIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ChatMethod
+      - ChatOptionsMethod
+      - SpeechMethod
+      - UploadMethod
+    Properties:
+      RestApiId: !Ref HealthcareAPI
+      StageName: !Ref Environment
+
+  # Lambda Permissions for API Gateway
+  AgentRouterPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AgentRouterFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HealthcareAPI}/*/*'
+
+  SpeechProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SpeechProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HealthcareAPI}/*/*'
+
+  FileProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FileProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HealthcareAPI}/*/*'
+
+  # ============================================================================
+  # SYSTEMS MANAGER PARAMETERS FOR CONFIGURATION
+  # ============================================================================
+  
+  APIEndpointParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/healthcare/api-endpoint'
+      Type: String
+      Value: !Sub 'https://${HealthcareAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+      Description: 'API Gateway endpoint URL'
+
+  CloudFrontURLParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/healthcare/cloudfront-url'
+      Type: String
+      Value: !Sub 'https://${Live2DDistribution.DomainName}'
+      Description: 'CloudFront distribution URL'
+
+  # ============================================================================
+  # CLOUDWATCH MONITORING AND COST ALERTS
+  # ============================================================================
+  
+  # CloudWatch Log Groups
+  AgentRouterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AgentRouterFunction}'
+      RetentionInDays: 14
+
+  IllnessMonitorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${IllnessMonitorFunction}'
+      RetentionInDays: 14
+
+  MentalHealthLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${MentalHealthFunction}'
+      RetentionInDays: 14
+
+  SafetyGuardianLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SafetyGuardianFunction}'
+      RetentionInDays: 14
+
+  WellnessCoachLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${WellnessCoachFunction}'
+      RetentionInDays: 14
+
+  SpeechProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SpeechProcessorFunction}'
+      RetentionInDays: 14
+
+  FileProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${FileProcessorFunction}'
+      RetentionInDays: 14
+
+  S3AccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/s3/${Environment}-healthcare-access-logs'
+      RetentionInDays: 7
+
+  # SNS Topic for Cost Alerts
+  CostAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${Environment}-healthcare-cost-alerts'
+      DisplayName: 'Healthcare System Cost Alerts'
+
+  CostAlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CostAlertTopic
+      Protocol: email
+      Endpoint: !Ref CostAlertEmail
+
+  # CloudWatch Billing Alarm
+  CostAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${Environment}-healthcare-cost-alarm'
+      AlarmDescription: 'Alert when monthly costs exceed threshold'
+      MetricName: EstimatedCharges
+      Namespace: AWS/Billing
+      Statistic: Maximum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: !Ref CostThreshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Currency
+          Value: USD
+      AlarmActions:
+        - !Ref CostAlertTopic
+
+  # ============================================================================
+  # EVENTBRIDGE FOR SCHEDULED TASKS
+  # ============================================================================
+  
+  # EventBridge Rule for Hong Kong Data Updates
+  HongKongDataUpdateRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${Environment}-hongkong-data-update'
+      Description: 'Update Hong Kong healthcare data daily'
+      ScheduleExpression: 'cron(0 8 * * ? *)'  # Daily at 8 AM UTC
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt IllnessMonitorFunction.Arn
+          Id: 'HongKongDataUpdateTarget'
+          Input: '{"action": "update_hongkong_data"}'
+
+  HongKongDataUpdatePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref IllnessMonitorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HongKongDataUpdateRule.Arn
+
+Outputs:
+  # API Endpoints
+  APIGatewayURL:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${HealthcareAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${Environment}-healthcare-api-url'
+
+  # Frontend URLs
+  CloudFrontURL:
+    Description: 'CloudFront distribution URL for Live2D frontend'
+    Value: !Sub 'https://${Live2DDistribution.DomainName}'
+    Export:
+      Name: !Sub '${Environment}-healthcare-frontend-url'
+
+  S3WebsiteURL:
+    Description: 'S3 static website URL (for development)'
+    Value: !GetAtt Live2DWebsiteBucket.WebsiteURL
+    Export:
+      Name: !Sub '${Environment}-healthcare-s3-website-url'
+
+  # Resource Names
+  ConversationsTableName:
+    Description: 'DynamoDB Conversations Table Name'
+    Value: !Ref ConversationsTable
+    Export:
+      Name: !Sub '${Environment}-conversations-table'
+
+  UserProfilesTableName:
+    Description: 'DynamoDB User Profiles Table Name'
+    Value: !Ref UserProfilesTable
+    Export:
+      Name: !Sub '${Environment}-users-table'
+
+  DataBucketName:
+    Description: 'S3 Data Storage Bucket Name'
+    Value: !Ref DataStorageBucket
+    Export:
+      Name: !Sub '${Environment}-data-bucket'
+
+  WebsiteBucketName:
+    Description: 'S3 Website Bucket Name'
+    Value: !Ref Live2DWebsiteBucket
+    Export:
+      Name: !Sub '${Environment}-website-bucket'
+
+  # Lambda Function Names
+  AgentRouterFunctionName:
+    Description: 'Agent Router Lambda Function Name'
+    Value: !Ref AgentRouterFunction
+    Export:
+      Name: !Sub '${Environment}-agent-router-function'
+
+  # Cost Information
+  EstimatedMonthlyCost:
+    Description: 'Estimated monthly cost for light usage (100 conversations/day)'
+    Value: '$5-10 USD (pay-per-use only)'
+
+  CostOptimizationFeatures:
+    Description: 'Cost optimization features enabled'
+    Value: 'DynamoDB on-demand, Lambda reserved concurrency, S3 lifecycle policies, CloudWatch log retention, TTL auto-cleanup'

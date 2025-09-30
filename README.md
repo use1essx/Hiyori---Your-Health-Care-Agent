@@ -1,386 +1,436 @@
-# 🏥🎭 Healthcare AI V2 + Live2D Unified System
+# Healthcare AI Live2D System 🏥✨
 
-**Complete Healthcare AI Assistant with Interactive Live2D Avatars**
+> **Intelligent Healthcare Assistant with Live2D Avatars on AWS**
 
-> A comprehensive, all-in-one healthcare AI system featuring specialized medical agents, interactive 3D avatars, and real-time Hong Kong healthcare data integration.
+A comprehensive healthcare AI system featuring interactive Live2D avatars that provide personalized health support in English and Traditional Chinese. Built for Hong Kong healthcare needs with AWS cloud infrastructure.
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)
+![Healthcare AI Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![AWS](https://img.shields.io/badge/AWS-Serverless-orange)
+![Live2D](https://img.shields.io/badge/Live2D-Interactive-blue)
+![Languages](https://img.shields.io/badge/Languages-EN%20%7C%20ZH--HK-red)
 
-## 🎯 System Overview
+## 🌟 Features
 
-This unified system combines:
-- **🏥 Healthcare AI V2 Backend** - Advanced multi-agent healthcare assistant
-- **🎭 Live2D Avatar Frontend** - Interactive 3D healthcare assistants
-- **🔊 Speech Integration** - Voice input/output with local STT/TTS
-- **🇭🇰 Hong Kong Integration** - Real-time local healthcare data
-- **🔐 Enterprise Security** - Healthcare-grade data protection
+### 🤖 **Four Specialized Healthcare Agents**
+- **🩺 Illness Monitor (Hiyori)** - Health symptom analysis and medical guidance
+- **🧠 Mental Health Support (Xiaoxing)** - Stress, anxiety, and emotional support
+- **🚨 Safety Guardian** - Emergency detection and crisis intervention
+- **💪 Wellness Coach** - Health education, prevention, and lifestyle guidance
 
-## 🤖 AI Healthcare Agents
+### 🎭 **Interactive Live2D Avatars**
+- Realistic animated characters with facial expressions
+- Voice synthesis with agent-specific personalities
+- Speech-to-text input for natural conversations
+- Multi-language support (English + Traditional Chinese)
 
-### 1. 🏥 慧心助手 (Illness Monitor)
-- **Avatar**: Hiyori (Professional, caring)
-- **Specialization**: Physical health monitoring, chronic disease management
-- **Target Users**: Elderly, chronic patients, general health concerns
-- **Languages**: Traditional Chinese, English
+### ☁️ **AWS Cloud Infrastructure**
+- **Serverless architecture** for automatic scaling
+- **Cost-optimized** with pay-per-use billing
+- **Global CDN** for fast worldwide access
+- **Enterprise security** with encryption and monitoring
 
-### 2. 🌟 小星星 (Mental Health Support)
-- **Avatar**: Haru (Gentle, supportive)
-- **Specialization**: Mental health support, emotional wellness
-- **Target Users**: Children, teenagers, mental health concerns
-- **Style**: VTuber-inspired for youth engagement
+### 🌏 **Hong Kong Healthcare Integration**
+- Traditional Chinese language support (繁體中文)
+- Local healthcare system knowledge
+- Cultural sensitivity in health advice
+- Emergency contact integration (999, local hotlines)
 
-### 3. 🚨 Safety Guardian (Emergency Response)
-- **Avatar**: Mao (Alert, authoritative)
-- **Specialization**: Emergency detection, crisis intervention
-- **Target Users**: All users in emergency situations
-- **Response**: Immediate escalation to emergency services
+## 🚀 Quick Start (5 Minutes)
 
-### 4. 💪 Wellness Coach (Health Education)
-- **Avatar**: Natori (Energetic, motivational)
-- **Specialization**: Preventive care, lifestyle guidance
-- **Target Users**: General wellness and prevention
-- **Focus**: Education and prevention strategies
+### Prerequisites
+- AWS Account ([Create one here](https://aws.amazon.com/))
+- AWS CLI installed and configured
+- Python 3.8+ installed
 
-## 🚀 Quick Start
+### One-Command Deployment
 
-### One-Command Startup
 ```bash
-# Clone and start the complete system
-git clone <your-repository>
+# 1. Clone the repository
+git clone https://github.com/your-username/healthcare-ai-live2d.git
 cd healthcare_ai_live2d_unified
-./scripts/deployment/start-all.sh
+
+# 2. Configure AWS CLI (if not already done)
+aws configure
+
+# 3. Run automated setup
+python setup_aws_deployment.py
+
+# 4. Deploy to AWS
+./quick_deploy.sh
 ```
 
-### Manual Setup
-```bash
-# 1. Copy environment configuration
-cp env.example .env
-# Edit .env with your API keys
+**That's it!** Your Healthcare AI system will be live on AWS in minutes.
 
-# 2. Install Python dependencies (if running outside Docker)
-pip install -r requirements.txt
+### What You Get
+- ✅ **Live Website**: Accessible globally via CloudFront CDN
+- ✅ **API Endpoints**: RESTful API for all healthcare agents
+- ✅ **Interactive Avatars**: Live2D characters with voice synthesis
+- ✅ **Cost Monitoring**: Automated cost tracking and alerts
+- ✅ **Security**: Enterprise-grade AWS security
+- ✅ **Scalability**: Handles 1 to 1M+ users automatically
 
-# 3. Start the unified system
-docker-compose up -d
+## 💬 Try It Out
 
-# 4. Check system health
-curl http://localhost:8000/health
-curl http://localhost:8080/health
+After deployment, you can interact with the healthcare agents:
+
+### English Examples
+```
+User: "I have a headache and feel dizzy"
+Hiyori (Illness Monitor): "I understand you're experiencing a headache and dizziness. These symptoms could indicate several conditions..."
+
+User: "I'm feeling stressed about work"
+Xiaoxing (Mental Health): "Work stress is very common. Let's explore some techniques to help you manage these feelings..."
+
+User: "I'm having chest pain"
+Safety Guardian: "Chest pain can be serious. I recommend seeking immediate medical attention. Should I help you contact emergency services?"
 ```
 
-### 📦 Dependency Management
-- **All Python dependencies** are managed through the root `requirements.txt`
-- **No duplicate requirement files** - single source of truth
-- **Modern Python tooling** available via `pyproject.toml`
-
-## 🌐 Access Points
-
-| Interface | URL | Purpose |
-|-----------|-----|---------|
-| **🎭 Live2D Chat** | http://localhost:8080 | Main user interface with avatars |
-| **🏥 Healthcare API** | http://localhost:8000 | Backend API endpoints |
-| **📚 API Docs** | http://localhost:8000/docs | Interactive API documentation |
-| **⚙️ Admin Panel** | http://localhost:8000/admin | System administration |
-| **🗄️ pgAdmin** | http://localhost:5050 | Database management |
-
-## 📁 Organized Project Structure
-
+### Traditional Chinese Examples
 ```
-healthcare_ai_live2d_unified/
-├── 🚀 ROOT FILES
-│   ├── README.md                    # Main project documentation
-│   ├── docker-compose.yml           # Complete system configuration
-│   ├── Dockerfile                   # Healthcare AI backend
-│   ├── requirements.txt             # Python dependencies (canonical)
-│   ├── pyproject.toml               # Modern Python project config
-│   └── env.example                  # Environment template
-│
-├── 📚 DOCUMENTATION
-│   ├── docs/setup/                  # Setup and configuration guides
-│   │   ├── DEMO_USERS.md           # Demo user credentials and profiles
-│   │   ├── PGADMIN_SETUP_GUIDE.md  # Database admin setup
-│   │   └── PROJECT_STRUCTURE.md    # Detailed project structure
-│   ├── docs/cleanup/                # Repository cleanup documentation
-│   │   ├── CLEANUP_PLAN.md         # Cleanup analysis and planning
-│   │   ├── CHANGELOG.md            # Repository cleanup changes
-│   │   ├── DEPRECATIONS.md         # Migration guide
-│   │   └── POSTCHECK.md            # Post-cleanup verification
-│   └── docs/guides/                 # Technical guides
-│
-├── 🔧 SCRIPTS
-│   ├── scripts/deployment/          # Deployment and startup scripts
-│   │   ├── start-all.sh            # Main system startup
-│   │   ├── quick-setup.sh          # Quick restart script
-│   │   └── deploy-with-auto-setup.sh # Complete deployment
-│   └── scripts/maintenance/         # Maintenance scripts
-│       └── restore-demo.sh         # Demo environment restoration
-│
-├── 🧠 SOURCE CODE
-│   ├── src/                         # Main application source
-│   │   ├── main.py                 # FastAPI application
-│   │   ├── agents/                 # Multi-agent AI system
-│   │   ├── web/live2d/frontend/    # Live2D web interface
-│   │   ├── web/api/                # REST API endpoints
-│   │   ├── web/auth/               # Authentication system
-│   │   ├── database/               # Database layer
-│   │   └── core/                   # Core utilities
-│
-├── ⚙️ CONFIGURATION
-│   ├── config/                     # System configuration
-│   ├── migrations/                 # Database migrations
-│   ├── sql/                        # Database schemas
-│   └── prompts/                    # AI agent prompts
-│
-└── 📊 RUNTIME DATA
-    ├── logs/                       # Application logs
-    └── tools/                      # Utility tools
+用戶: "我頭痛同頭暈"
+Hiyori: "我明白你正在經歷頭痛和頭暈。這些症狀可能表示幾種情況..."
+
+用戶: "我對工作感到很大壓力"
+Xiaoxing: "工作壓力很常見。讓我們探討一些技巧來幫助你管理這些感受..."
+
+用戶: "我胸痛"
+Safety Guardian: "胸痛可能很嚴重。我建議立即尋求醫療協助。我應該幫你聯絡緊急服務嗎？"
 ```
 
-## 🔧 Configuration
+## 🏗️ Architecture
 
-### Required API Keys
-1. **OpenRouter API Key** - Get from [openrouter.ai](https://openrouter.ai/keys)
-2. Add to your `.env` file: `OPENROUTER_API_KEY=your_key_here`
-
-### Environment Variables
-All configuration is done through the `.env` file. See `env.example` for complete options.
-
-Key settings:
-```bash
-# API Keys
-OPENROUTER_API_KEY=your_openrouter_key
-
-# Ports
-HEALTHCARE_AI_PORT=8000
-LIVE2D_PORT=8080
-PGADMIN_PORT=5050
-
-# Features
-ENABLE_LIVE2D=true
-ENABLE_STT=false
-ENABLE_ADMIN_INTERFACE=true
+### System Overview
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   CloudFront    │    │   API Gateway    │    │ Lambda Functions│
+│   (Frontend)    │◄──►│   (REST API)     │◄──►│ (Healthcare AI) │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                        │
+         ▼                        ▼                        ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   S3 Bucket     │    │   DynamoDB       │    │  Amazon Bedrock │
+│ (Static Assets) │    │ (Conversations)  │    │   (AI Models)   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-## 🧪 Testing
+### Key Components
+- **Frontend**: Live2D avatars, voice interface, responsive web app
+- **API Layer**: RESTful endpoints for chat, speech, file upload
+- **AI Agents**: Specialized healthcare assistants using Amazon Bedrock
+- **Data Storage**: DynamoDB for conversations, S3 for files
+- **Speech Services**: AWS Transcribe (STT) + Polly (TTS)
+- **Monitoring**: CloudWatch logs, cost alerts, performance metrics
 
-### Quick System Test
-```bash
-# Test Healthcare AI Backend
-curl http://localhost:8000/health
+## 📊 Cost Breakdown
 
-# Test Live2D Frontend
-curl http://localhost:8080/health
+### Expected Monthly Costs (USD)
+| Component | Development | Production |
+|-----------|-------------|------------|
+| Lambda Functions | $3-8 | $8-20 |
+| DynamoDB | $2-5 | $5-15 |
+| Amazon Bedrock | $5-15 | $15-40 |
+| S3 + CloudFront | $1-3 | $3-8 |
+| API Gateway | $1-3 | $3-10 |
+| Speech Services | $1-5 | $3-12 |
+| **Total** | **$13-39** | **$37-105** |
 
-# Test Chat Integration
-curl -X POST http://localhost:8080/live2d/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello, I have a headache"}'
-
-# Test Chinese Language
-curl -X POST http://localhost:8080/live2d/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "我頭痛", "language": "zh-HK"}'
-```
-
-### System Status
-```bash
-# Check all services
-docker-compose ps
-
-# View logs
-docker-compose logs -f
-
-# Monitor system health
-watch -n 5 'curl -s http://localhost:8000/health && echo && curl -s http://localhost:8080/health'
-```
-
-## 🔒 Security Features
-
-- **🔐 JWT Authentication** with refresh tokens
-- **🛡️ Role-based Access Control** (User, Admin, Medical Reviewer)
-- **⚡ Rate Limiting** to prevent API abuse
-- **🔍 Audit Logging** for all user actions
-- **🏥 Healthcare Data Encryption** in transit and at rest
-- **🌐 CORS Protection** for web security
-- **🔒 Input Validation** and sanitization
-
-## 📱 Supported Features
-
-### Healthcare AI Capabilities
-- ✅ Multi-agent intelligent routing
-- ✅ Traditional Chinese language support
-- ✅ Hong Kong healthcare system integration
-- ✅ Emergency detection and response
-- ✅ Chronic disease management
-- ✅ Mental health support
-- ✅ Wellness coaching
-
-### Live2D Avatar Features
-- ✅ 4 specialized healthcare assistant models
-- ✅ Emotional expressions based on conversation context
-- ✅ Cultural gestures for Hong Kong users
-- ✅ Voice interaction with STT/TTS
-- ✅ Real-time avatar switching
-- ✅ Background customization
-
-### Integration Features
-- ✅ Seamless backend-frontend communication
-- ✅ WebSocket support for real-time chat
-- ✅ User authentication across both systems
-- ✅ Unified logging and monitoring
-- ✅ Single Docker deployment
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**❌ "Services won't start"**
-```bash
-# Check Docker status
-docker-compose ps
-
-# Restart specific service
-docker-compose restart healthcare_ai
-
-# View service logs
-docker-compose logs healthcare_ai
-```
-
-**❌ "Live2D avatars not loading"**
-```bash
-# Check Live2D service
-curl http://localhost:8080/health
-
-# Check model configuration
-curl http://localhost:8080/live2d/models
-```
-
-**❌ "Database connection failed"**
-```bash
-# Check PostgreSQL
-docker-compose exec postgres pg_isready -U admin
-
-# Reset database
-docker-compose down
-docker volume rm healthcare_ai_live2d_unified_postgres_data
-docker-compose up -d
-```
-
-**❌ "API key not working"**
-```bash
-# Check API key configuration
-curl http://localhost:8000/api/v1/health/api-key-status
-
-# Update .env file with valid OpenRouter API key
-```
-
-### Log Locations
-- **Application Logs**: `logs/` directory
-- **Docker Logs**: `docker-compose logs -f [service_name]`
-- **Database Logs**: `docker-compose logs postgres`
-- **Live2D Logs**: `docker-compose logs live2d_frontend`
-
-## 📊 Monitoring
-
-### Health Endpoints
-- **Overall System**: `http://localhost:8080/health`
-- **Healthcare AI**: `http://localhost:8000/health`
-- **Live2D System**: `http://localhost:8080/live2d/health`
-- **Database**: Check via pgAdmin or Docker logs
-
-### Performance Monitoring
-- **Admin Dashboard**: `http://localhost:8000/admin`
-- **API Metrics**: `http://localhost:8000/docs`
-- **Live2D Status**: `http://localhost:8080/live2d/admin/status`
+### Cost Optimization Features
+- ✅ **Auto-scaling**: Pay only for actual usage
+- ✅ **DynamoDB TTL**: Automatic cleanup of old conversations
+- ✅ **S3 Lifecycle**: Automatic archiving of old files
+- ✅ **Lambda optimization**: Right-sized memory and timeout
+- ✅ **Cost alerts**: Email notifications when thresholds exceeded
 
 ## 🛠️ Development
 
+### Project Structure
+```
+healthcare_ai_live2d_unified/
+├── 📁 src/
+│   ├── 📁 lambda/              # AWS Lambda functions
+│   │   ├── 📁 agent_router/    # Routes messages to appropriate agents
+│   │   ├── 📁 illness_monitor/ # Health symptom analysis (Hiyori)
+│   │   ├── 📁 mental_health/   # Mental health support (Xiaoxing)
+│   │   ├── 📁 safety_guardian/ # Emergency detection
+│   │   ├── 📁 wellness_coach/  # Health education
+│   │   ├── 📁 speech_to_text/  # Voice input processing
+│   │   └── 📁 text_to_speech/  # Voice synthesis
+│   └── 📁 aws/                 # AWS service clients
+├── 📁 frontend/                # Live2D web interface
+├── 📁 infrastructure/          # CloudFormation templates
+├── 📁 tests/                   # Comprehensive test suite
+├── 📁 scripts/                 # Deployment and utility scripts
+└── 📁 docs/                    # Documentation
+```
+
+### Local Development
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+npm install  # For frontend dependencies
+
+# Set up local environment
+cp infrastructure/config.env.template infrastructure/config.env
+# Edit config.env with your settings
+
+# Run local tests
+python -m pytest tests/
+python tests/test_framework.py
+
+# Run integration tests
+python run_final_integration_test.py --environment dev
+```
+
+### Adding New Agents
+
+1. **Create Lambda function**:
+   ```bash
+   mkdir src/lambda/my_new_agent
+   cp src/lambda/wellness_coach/handler.py src/lambda/my_new_agent/
+   # Customize the handler for your agent
+   ```
+
+2. **Update agent router**:
+   ```python
+   # In src/lambda/agent_router/handler.py
+   def route_message(message, context):
+       if "my_condition" in message.lower():
+           return "my_new_agent"
+   ```
+
+3. **Deploy**:
+   ```bash
+   cd src/lambda/my_new_agent
+   python deploy.py --environment dev
+   ```
+
+## 🧪 Testing
+
+### Automated Testing Suite
+
+```bash
+# Run all tests
+./scripts/run_final_tests.sh --environment dev
+
+# Run specific test categories
+python run_final_integration_test.py --environment dev --cost-analysis
+
+# Test individual agents
+curl -X POST https://your-api-url/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "I have a headache", "user_id": "test_user"}'
+```
+
+### Test Coverage
+- ✅ **Unit Tests**: Individual function testing
+- ✅ **Integration Tests**: End-to-end workflows
+- ✅ **Performance Tests**: Response time and concurrency
+- ✅ **Security Tests**: Authentication and authorization
+- ✅ **Cost Tests**: Budget compliance validation
+- ✅ **Accessibility Tests**: Multi-language and disability support
+
+## 🔒 Security & Privacy
+
+### Data Protection
+- **Encryption at Rest**: All data encrypted in DynamoDB and S3
+- **Encryption in Transit**: HTTPS/TLS for all communications
+- **Access Control**: IAM roles with least-privilege principles
+- **Data Retention**: Automatic cleanup of old conversations
+- **Audit Logging**: CloudTrail for all API calls
+
+### Privacy Features
+- **Anonymous Mode**: No personal data required
+- **Data Minimization**: Only essential data collected
+- **User Control**: Users can delete their conversation history
+- **Compliance**: Designed for healthcare data regulations
+
+### Security Best Practices
+- Regular security updates and patches
+- Vulnerability scanning and monitoring
+- Secure API key management (AWS Parameter Store)
+- Network security with VPC (optional)
+
+## 🌍 Internationalization
+
+### Supported Languages
+- **English (en-US)**: Full support with American medical terminology
+- **Traditional Chinese (zh-HK)**: Hong Kong healthcare context
+
+### Adding New Languages
+
+1. **Update language configuration**:
+   ```javascript
+   // In frontend/config/aws-config.js
+   supportedLanguages: ['en-US', 'zh-HK', 'your-language']
+   ```
+
+2. **Add language-specific prompts**:
+   ```python
+   # In src/lambda/agent_router/handler.py
+   LANGUAGE_PROMPTS = {
+       'your-language': 'Your healthcare prompt in the target language'
+   }
+   ```
+
+3. **Configure speech services**:
+   ```python
+   # Add voice configuration for new language
+   VOICE_CONFIG = {
+       'your-language': {
+           'voice_id': 'YourLanguageVoice',
+           'engine': 'neural'
+       }
+   }
+   ```
+
+## 📈 Monitoring & Analytics
+
+### Built-in Monitoring
+- **Real-time Metrics**: Response times, error rates, usage patterns
+- **Cost Tracking**: Daily/monthly spend with trend analysis
+- **Health Checks**: Automated system health monitoring
+- **User Analytics**: Conversation patterns and agent effectiveness
+
+### Dashboards
+- **CloudWatch Dashboard**: AWS service metrics
+- **Cost Dashboard**: Spending analysis and projections
+- **Usage Dashboard**: User engagement and agent performance
+
+### Alerts
+- **Cost Alerts**: Email when spending exceeds thresholds
+- **Error Alerts**: Immediate notification of system issues
+- **Performance Alerts**: Response time degradation warnings
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
 ### Development Setup
 ```bash
-# Install development dependencies
-pip install -e ".[dev]"
+# Fork the repository
+git clone https://github.com/your-username/healthcare-ai-live2d.git
+cd healthcare_ai_live2d_unified
 
-# Run in development mode
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+# Create development branch
+git checkout -b feature/your-feature-name
 
-# Run tests
-pytest src/tests/
+# Set up development environment
+python setup_aws_deployment.py --environment dev
 ```
 
-### Code Quality
+### Contribution Guidelines
+1. **Code Style**: Follow PEP 8 for Python, ESLint for JavaScript
+2. **Testing**: Add tests for new features
+3. **Documentation**: Update README and inline docs
+4. **Security**: Follow security best practices
+5. **Performance**: Consider cost and performance impact
+
+### Pull Request Process
+1. Create feature branch from `main`
+2. Implement changes with tests
+3. Run full test suite: `./scripts/run_final_tests.sh`
+4. Update documentation
+5. Submit pull request with detailed description
+
+## 📚 Documentation
+
+### Quick Links
+- 🚀 **[Quick Start Guide](QUICK_START_AWS.md)** - Get running in 5 minutes
+- 🏗️ **[Detailed Deployment Guide](README_DEPLOYMENT.md)** - Complete setup instructions
+- 🧪 **[Testing Guide](tests/README_FINAL_TESTING.md)** - Comprehensive testing documentation
+- 💰 **[Cost Optimization Guide](OPTIMIZATION_README.md)** - Reduce your AWS costs
+
+### API Documentation
+- **Chat API**: `POST /chat` - Send messages to healthcare agents
+- **Speech API**: `POST /speech` - Convert speech to text and text to speech
+- **Upload API**: `POST /upload` - Upload files for analysis
+- **Health API**: `GET /health` - System health check
+
+### Agent Documentation
+- **[Agent Router](src/lambda/agent_router/README.md)** - Message routing logic
+- **[Illness Monitor](src/lambda/illness_monitor/README.md)** - Health symptom analysis
+- **[Mental Health](src/lambda/mental_health/README.md)** - Emotional support
+- **[Safety Guardian](src/lambda/safety_guardian/README.md)** - Emergency detection
+- **[Wellness Coach](src/lambda/wellness_coach/README.md)** - Health education
+
+## 🆘 Support
+
+### Getting Help
+1. **📖 Check Documentation**: Start with the guides above
+2. **🐛 Search Issues**: Look for existing solutions
+3. **💬 Ask Questions**: Create a new issue with details
+4. **📧 Contact Support**: For urgent issues
+
+### Common Issues
+- **Deployment Failures**: Check AWS permissions and service limits
+- **High Costs**: Review cost optimization guide
+- **Performance Issues**: Check CloudWatch metrics
+- **Agent Responses**: Verify Bedrock model configuration
+
+### Troubleshooting Commands
 ```bash
-# Format code
-black src/
-isort src/
+# Check deployment status
+aws cloudformation describe-stacks --stack-name healthcare-ai-prod
 
-# Type checking
-mypy src/
+# View recent logs
+aws logs tail /aws/lambda/healthcare-ai-prod-agent-router --follow
 
-# Linting
-flake8 src/
+# Test API endpoints
+python run_final_integration_test.py --environment prod --verbose
+
+# Analyze costs
+python scripts/cost_analysis.py --environment prod --output cost_report.json
 ```
-
-## 🌟 Key Features
-
-### For End Users
-- **Interactive Avatars** - 4 specialized healthcare assistants
-- **Voice Interaction** - Speak naturally with the AI
-- **Traditional Chinese** - Full support for Hong Kong users
-- **Emergency Response** - Immediate help for urgent situations
-- **Personalized Care** - Tailored advice based on user profile
-
-### For Healthcare Providers
-- **Professional Dashboard** - Monitor and manage the system
-- **Data Analytics** - Track usage and effectiveness
-- **Content Management** - Upload and manage medical documents
-- **User Management** - Manage user accounts and permissions
-- **Audit Trails** - Complete logging for compliance
-
-### For Administrators
-- **System Monitoring** - Real-time health and performance metrics
-- **Database Management** - pgAdmin interface for data management
-- **Security Monitoring** - Track and respond to security events
-- **Configuration Management** - Easy system configuration
-- **Backup & Recovery** - Automated backup and restore capabilities
-
-## 🔮 Future Enhancements
-
-- **📱 Mobile App** - Native iOS and Android applications
-- **🌍 Multi-language** - Support for additional languages
-- **🏥 EHR Integration** - Electronic Health Record connectivity
-- **☁️ Cloud Deployment** - AWS/Azure production deployment
-- **📊 Advanced Analytics** - ML-powered health insights
-- **🔗 IoT Integration** - Health monitoring device connectivity
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Support
+## 🙏 Acknowledgments
 
-### Getting Help
-1. **Check Health Endpoints** - Verify all services are running
-2. **Review Logs** - Check application and Docker logs
-3. **Test Integration** - Use provided test commands
-4. **Documentation** - See organized guides in:
-   - `docs/setup/` - Setup and configuration guides
-   - `docs/cleanup/` - Repository cleanup documentation
-   - `docs/guides/` - Technical guides and examples
+- **Live2D**: For the amazing avatar technology
+- **AWS**: For the robust cloud infrastructure
+- **Anthropic**: For the Claude AI models via Bedrock
+- **Hong Kong Healthcare System**: For inspiration and requirements
+- **Open Source Community**: For tools and libraries used
 
-### Emergency Contacts (Hong Kong)
-- **Medical Emergency**: 999
-- **Mental Health Crisis**: Samaritans (2896 0000)
-- **Child Protection**: 2755 1122
+## 🔮 Roadmap
+
+### Upcoming Features
+- 🎯 **Advanced Analytics**: Detailed health insights and trends
+- 🔗 **EHR Integration**: Connect with electronic health records
+- 📱 **Mobile App**: Native iOS and Android applications
+- 🤖 **More Agents**: Specialized agents for specific conditions
+- 🌐 **More Languages**: Simplified Chinese, Japanese, Korean
+- 🏥 **Hospital Integration**: Direct connection to healthcare providers
+
+### Version History
+- **v1.0.0** (Current): Initial release with 4 healthcare agents
+- **v0.9.0**: Beta release with Live2D integration
+- **v0.8.0**: Alpha release with basic chat functionality
 
 ---
 
-**🎉 Ready to Get Started?**
+## 🚀 Ready to Deploy?
 
-Run `./scripts/deployment/start-all.sh` and visit `http://localhost:8000` to begin your healthcare AI journey!
+Get your Healthcare AI system running on AWS in minutes:
+
+```bash
+git clone https://github.com/your-username/healthcare-ai-live2d.git
+cd healthcare_ai_live2d_unified
+python setup_aws_deployment.py
+./quick_deploy.sh
+```
+
+**Questions?** Check out our [Quick Start Guide](QUICK_START_AWS.md) or [create an issue](https://github.com/your-username/healthcare-ai-live2d/issues).
 
 ---
 
-*Healthcare AI V2 + Live2D Unified System - Bringing compassionate AI healthcare assistance to Hong Kong with interactive avatars* 🇭🇰💙
+<div align="center">
+
+**Built with ❤️ for Healthcare**
+
+[🌟 Star this repo](https://github.com/your-username/healthcare-ai-live2d) • [🐛 Report Bug](https://github.com/your-username/healthcare-ai-live2d/issues) • [💡 Request Feature](https://github.com/your-username/healthcare-ai-live2d/issues)
+
+</div>

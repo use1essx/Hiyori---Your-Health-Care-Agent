@@ -1,0 +1,5 @@
+# Agent Router Lambda Requirements
+# Minimal dependencies for cost optimization
+
+boto3>=1.34.0
+botocore>=1.34.0
